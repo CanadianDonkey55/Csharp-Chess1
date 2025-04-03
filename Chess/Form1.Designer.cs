@@ -56,7 +56,6 @@
             chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
             chessBoard.Size = new Size(700, 700);
             chessBoard.TabIndex = 0;
-            chessBoard.Paint += chessBoard_Paint;
             // 
             // label1
             // 

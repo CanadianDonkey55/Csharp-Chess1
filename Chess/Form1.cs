@@ -18,7 +18,6 @@ namespace Chess
             button.Dock = DockStyle.Fill;
             button.BackColor = Color.Black;
             button.Visible = true;
-            //chessBoard.Controls.Add(button, height, width);
 
             label1.Text = height.ToString();
 
@@ -26,7 +25,7 @@ namespace Chess
             {
                 for (int x = 0; x < width; x++)
                 {
-                    chessBoard.Controls.Add(new Button { Text = x.ToString() + ", " + y.ToString(), Dock = DockStyle.Fill, BackColor = Color.Black, ForeColor = Color.White }, x, y);
+                    chessBoard.Controls.Add(new BoardSquare { Text = x.ToString() + ", " + y.ToString(), Dock = DockStyle.Fill, BackColor = Color.Black, ForeColor = Color.White }, x, y);
                 }
             }
         }
@@ -34,6 +33,9 @@ namespace Chess
 
     public class BoardSquare : Button
     {
-        
+        public void NewSquare()
+        {
+            
+        }
     }
 }
