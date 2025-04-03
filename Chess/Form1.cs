@@ -30,11 +30,6 @@ namespace Chess
                 }
             }
         }
-
-        private void chessBoard_Paint(object sender, PaintEventArgs e)
-        {
-            
-        }
     }
 
     public class BoardSquare : Button
