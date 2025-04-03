@@ -13,47 +13,45 @@ namespace Chess
             var height = chessBoard.RowCount;
             var width = chessBoard.ColumnCount;
 
+            var colInt = 0;
+
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    var colInt = 0;
-                    var divXY = (x + 1) / (y + 1);
-
-                    if (divXY %  2 == 0)
-                    {
-                        colInt = 1;
-                    } else
-                    {
-                        colInt = 0;
-                    }
-                    
-
                     chessBoard.Controls.Add(new BoardSquare().SquareTemplate(colInt), x, y);
+                    colInt++;
                 }
+                colInt--;
             }
         }
     }
 
     public class BoardSquare : Button
     {
-        protected Control control = new Control();
-
-        public Control SquareTemplate(int backColour)
+        public Button SquareTemplate(int backColour)
         {
+            Button square = new Button();
             Color colour = new Color();
 
-            if (backColour == 0)
+            if (backColour % 2 == 0)
             {
                 colour = Color.White;
-            } else if (backColour == 1)
+            } 
+            else
             {
                 colour = Color.Black;
             }
 
-                control.Dock = DockStyle.Fill;
-            control.BackColor = colour;
-            return control;
+            square.Dock = DockStyle.Fill;
+            square.BackColor = colour;
+            square.Click += (sender, e) => OnSquareClick();
+            return square;
+        }
+
+        public void OnSquareClick()
+        {
+            Application.Exit();
         }
     }
 }

@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             chessBoard = new TableLayoutPanel();
+            label1 = new Label();
             SuspendLayout();
             // 
             // chessBoard
@@ -56,21 +57,33 @@
             chessBoard.Size = new Size(700, 700);
             chessBoard.TabIndex = 0;
             // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(1121, 24);
+            label1.Name = "label1";
+            label1.Size = new Size(38, 15);
+            label1.TabIndex = 1;
+            label1.Text = "label1";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.WindowFrame;
             ClientSize = new Size(1336, 722);
+            Controls.Add(label1);
             Controls.Add(chessBoard);
             Name = "Form1";
             Text = "Chess";
             WindowState = FormWindowState.Maximized;
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
         private TableLayoutPanel chessBoard;
+        public Label label1;
     }
 }
