@@ -12,12 +12,19 @@ namespace Chess
             var height = chessBoard.RowCount;
             var width = chessBoard.ColumnCount;
 
+            Button button = new Button();
+            button.Text = "1";
+            button.Dock = DockStyle.Fill;
+            button.Visible = true;
+            chessBoard.Controls.Add(button, height, width);
+
+            label1.Text = height.ToString();
+
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    Button button = new Button { Text = "1"};
-                    chessBoard.Controls.Add(button, x, y);
+                    
                 }
             }
         }
