@@ -28,40 +28,40 @@
         /// </summary>
         private void InitializeComponent()
         {
-            tableLayoutPanel1 = new TableLayoutPanel();
+            chessBoard = new TableLayoutPanel();
             SuspendLayout();
             // 
-            // tableLayoutPanel1
+            // chessBoard
             // 
-            tableLayoutPanel1.ColumnCount = 8;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.Location = new Point(333, 10);
-            tableLayoutPanel1.Name = "tableLayoutPanel1";
-            tableLayoutPanel1.RowCount = 8;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
-            tableLayoutPanel1.Size = new Size(700, 700);
-            tableLayoutPanel1.TabIndex = 0;
+            chessBoard.ColumnCount = 8;
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 12.5F));
+            chessBoard.Location = new Point(333, 10);
+            chessBoard.Name = "chessBoard";
+            chessBoard.RowCount = 8;
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.RowStyles.Add(new RowStyle(SizeType.Percent, 12.5F));
+            chessBoard.Size = new Size(700, 700);
+            chessBoard.TabIndex = 0;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1336, 722);
-            Controls.Add(tableLayoutPanel1);
+            Controls.Add(chessBoard);
             Name = "Form1";
             Text = "Chess";
             WindowState = FormWindowState.Maximized;
@@ -70,6 +70,6 @@
 
         #endregion
 
-        private TableLayoutPanel tableLayoutPanel1;
+        private TableLayoutPanel chessBoard;
     }
 }
