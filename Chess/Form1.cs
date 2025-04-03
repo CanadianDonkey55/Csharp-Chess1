@@ -5,9 +5,10 @@ namespace Chess
         public Form1()
         {
             InitializeComponent();
+            GenerateBoard();
         }
 
-        private void chessBoard_Paint(object sender, PaintEventArgs e)
+        private void GenerateBoard()
         {
             var height = chessBoard.RowCount;
             var width = chessBoard.ColumnCount;
@@ -15,8 +16,9 @@ namespace Chess
             Button button = new Button();
             button.Text = "1";
             button.Dock = DockStyle.Fill;
+            button.BackColor = Color.Black;
             button.Visible = true;
-            chessBoard.Controls.Add(button, height, width);
+            //chessBoard.Controls.Add(button, height, width);
 
             label1.Text = height.ToString();
 
@@ -24,9 +26,19 @@ namespace Chess
             {
                 for (int x = 0; x < width; x++)
                 {
-                    
+                    chessBoard.Controls.Add(new Button { Text = x.ToString() + ", " + y.ToString(), Dock = DockStyle.Fill, BackColor = Color.Black, ForeColor = Color.White }, x, y);
                 }
             }
         }
+
+        private void chessBoard_Paint(object sender, PaintEventArgs e)
+        {
+            
+        }
+    }
+
+    public class BoardSquare : Button
+    {
+        
     }
 }
