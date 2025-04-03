@@ -13,19 +13,23 @@ namespace Chess
             var height = chessBoard.RowCount;
             var width = chessBoard.ColumnCount;
 
-            Button button = new Button();
-            button.Text = "1";
-            button.Dock = DockStyle.Fill;
-            button.BackColor = Color.Black;
-            button.Visible = true;
-
-            label1.Text = height.ToString();
-
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    chessBoard.Controls.Add(new BoardSquare { Text = x.ToString() + ", " + y.ToString(), Dock = DockStyle.Fill, BackColor = Color.Black, ForeColor = Color.White }, x, y);
+                    var colInt = 0;
+                    var divXY = (x + 1) / (y + 1);
+
+                    if (divXY %  2 == 0)
+                    {
+                        colInt = 1;
+                    } else
+                    {
+                        colInt = 0;
+                    }
+                    
+
+                    chessBoard.Controls.Add(new BoardSquare().SquareTemplate(colInt), x, y);
                 }
             }
         }
@@ -33,9 +37,23 @@ namespace Chess
 
     public class BoardSquare : Button
     {
-        public void NewSquare()
+        protected Control control = new Control();
+
+        public Control SquareTemplate(int backColour)
         {
-            
+            Color colour = new Color();
+
+            if (backColour == 0)
+            {
+                colour = Color.White;
+            } else if (backColour == 1)
+            {
+                colour = Color.Black;
+            }
+
+                control.Dock = DockStyle.Fill;
+            control.BackColor = colour;
+            return control;
         }
     }
 }
