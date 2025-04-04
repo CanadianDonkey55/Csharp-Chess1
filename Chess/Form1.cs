@@ -15,13 +15,13 @@ namespace Chess
             var width = this.ClientSize.Width;
             var height = this.ClientSize.Height;
 
-            var newBoardWidth = width - chessBoard.Width;
+            var newBoardWidth = 
             var newBoardHeight = height - chessBoard.Height;
 
             chessBoard.Width = newBoardWidth;
             chessBoard.Height = newBoardHeight;
 
-            Point chessBoardCenterPoint = new Point(newBoardHeight / 2, newBoardWidth / 2);
+            Point chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
         }
 
