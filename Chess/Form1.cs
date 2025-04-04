@@ -33,9 +33,10 @@ namespace Chess
 
     public class BoardSquare
     {
-        Button square = new Button();
         public Button SquareTemplate(int backColour)
         {
+            Button square = new Button();
+
             square.FlatStyle = FlatStyle.Flat;
             Color colour;
 
@@ -61,13 +62,13 @@ namespace Chess
 
         public void OnSquareClick()
         {
-            Application.Restart();
+            MessageBox.Show("");
         }
     }
 
-    public class Pieces
+    public abstract class Pieces
     {
-        private BoardSquare currentBoardSquare = new BoardSquare();
+        private BoardSquare currentBoardSquare;
 
 
     }
