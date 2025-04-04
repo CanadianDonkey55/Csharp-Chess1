@@ -10,6 +10,21 @@ namespace Chess
             GenerateBoard();
         }
 
+        private void Form1_Resize(object sender, System.EventArgs e)
+        {
+            var width = this.ClientSize.Width;
+            var height = this.ClientSize.Height;
+
+            var newBoardWidth = width - chessBoard.Width;
+            var newBoardHeight = height - chessBoard.Height;
+
+            chessBoard.Width = newBoardWidth;
+            chessBoard.Height = newBoardHeight;
+
+            Point chessBoardCenterPoint = new Point(newBoardHeight / 2, newBoardWidth / 2);
+            chessBoard.Location = chessBoardCenterPoint;
+        }
+
         private void GenerateBoard()
         {
             var rows = chessBoard.RowCount;

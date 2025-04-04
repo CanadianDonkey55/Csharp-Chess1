@@ -77,6 +77,7 @@
             Name = "Form1";
             Text = "Chess";
             WindowState = FormWindowState.Maximized;
+            Resize += Form1_Resize;
             ResumeLayout(false);
             PerformLayout();
         }
