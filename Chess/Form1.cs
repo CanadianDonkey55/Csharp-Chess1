@@ -2,12 +2,12 @@ namespace Chess
 {
     public partial class Form1 : Form
     {
-        BoardSquare[,] squares;
+        readonly ChessBoard board;
 
         public Form1()
         {
             InitializeComponent();
-            GenerateBoard();
+            board = new ChessBoard(chessBoard);
         }
 
         private void Form1_Resize(object sender, System.EventArgs e)
@@ -15,14 +15,34 @@ namespace Chess
             var width = this.ClientSize.Width;
             var height = this.ClientSize.Height;
 
-            var newBoardWidth = 
-            var newBoardHeight = height - chessBoard.Height;
+            var newBoardWidth = (int)(width * 0.7);
+            var newBoardHeight = (int)(height * 0.7);
 
-            chessBoard.Width = newBoardWidth;
-            chessBoard.Height = newBoardHeight;
+            if (newBoardWidth < newBoardHeight)
+            {
+                chessBoard.Width = newBoardWidth;
+                chessBoard.Height = newBoardWidth;
+            } else
+            {
+                chessBoard.Width = newBoardHeight;
+                chessBoard.Height = newBoardHeight;
+            }
 
             Point chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
+        }
+    }
+
+    public class ChessBoard
+    {
+        public BoardSquare[,] squares { get; set; }
+
+        private TableLayoutPanel chessBoard;
+
+        public ChessBoard(TableLayoutPanel chessBoardPanel)
+        {
+            chessBoard = chessBoardPanel;
+            GenerateBoard();
         }
 
         private void GenerateBoard()
@@ -32,30 +52,47 @@ namespace Chess
 
             squares = new BoardSquare[rows, columns];
 
-            var colInt = 0;
+            bool colInt = false;
 
             for (int r = 0; r < rows; r++)
             {
                 for (int c = 0; c < columns; c++)
                 {
-                    chessBoard.Controls.Add(new BoardSquare().SquareTemplate(colInt), c, r);
-                    colInt++;
+                    var square = new BoardSquare(r, c, colInt);
+                    squares[r, c] = square;
+
+                    chessBoard.Controls.Add(square.Button, c, r);
+                    colInt = !colInt;
                 }
-                colInt--;
+                colInt = !colInt;
             }
         }
     }
 
     public class BoardSquare
     {
-        public Button SquareTemplate(int backColour)
+        public int Row {  get; set; }
+        public int Column { get; set; }
+        public bool Colour { get; set; }
+        public Button Button { get; set; }
+
+        public BoardSquare(int row, int column, bool colour)
         {
-            Button square = new Button();
+            Row = row;
+            Column = column;
+
+            Colour = colour;
+            Button = SquareTemplate(colour);
+        }
+
+        public Button SquareTemplate(bool backColour)
+        {
+            var square = new Button();
 
             square.FlatStyle = FlatStyle.Flat;
             Color colour;
 
-            if (backColour % 2 == 0)
+            if (!backColour)
             {
                 colour = Color.White;
             } 
@@ -77,7 +114,7 @@ namespace Chess
 
         public void OnSquareClick()
         {
-            MessageBox.Show("");
+            MessageBox.Show($"You clicked square ({Row + 1}, {Column + 1})");
         }
     }
 
