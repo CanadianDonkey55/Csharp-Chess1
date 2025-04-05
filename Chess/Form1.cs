@@ -2,12 +2,10 @@ namespace Chess
 {
     public partial class Form1 : Form
     {
-        readonly ChessBoard board;
-
         public Form1()
         {
             InitializeComponent();
-            board = new ChessBoard(chessBoard);
+            ChessBoard board = new ChessBoard(chessBoard);
         }
 
         private void Form1_Resize(object sender, System.EventArgs e)
@@ -26,7 +24,8 @@ namespace Chess
             {
                 chessBoard.Width = newBoardWidth;
                 chessBoard.Height = newBoardWidth;
-            } else
+            } 
+            else
             {
                 chessBoard.Width = newBoardHeight;
                 chessBoard.Height = newBoardHeight;
@@ -42,12 +41,13 @@ namespace Chess
     {
         public BoardSquare[,] squares { get; set; }
 
-        private TableLayoutPanel chessBoard;
+        public TableLayoutPanel chessBoard { get; }
 
         public ChessBoard(TableLayoutPanel chessBoardPanel)
         {
             chessBoard = chessBoardPanel;
             GenerateBoard();
+            GenerateStartingPieces();
         }
 
         private void GenerateBoard()
@@ -72,14 +72,23 @@ namespace Chess
                 colInt = !colInt;
             }
         }
-    }
 
+        public void GenerateStartingPieces()
+        {
+            new Rook(squares[0, 0], true);
+            new Rook(squares[0, 7], true);
+            new Rook(squares[7, 0], false);
+            new Rook(squares[7, 7], false);
+        }
+    }
+         
     public class BoardSquare
     {
         public int Row {  get; set; }
         public int Column { get; set; }
         public bool Colour { get; set; }
         public Button Button { get; set; }
+        public Piece CurrentPiece { get; set; }
 
         public BoardSquare(int row, int column, bool colour)
         {
@@ -120,14 +129,85 @@ namespace Chess
 
         public void OnSquareClick()
         {
-            MessageBox.Show($"You clicked square ({Row + 1}, {Column + 1})");
+            string pieceColour;
+            if (CurrentPiece.IsBlack)
+            {
+                pieceColour = "Black";
+            } else
+            {
+                pieceColour = "White";
+            }
+
+            MessageBox.Show($"There is a {pieceColour} {CurrentPiece.GetType().Name} on this square.");
         }
     }
 
-    public abstract class Pieces
+    public abstract class Piece
     {
-        private BoardSquare currentBoardSquare;
+        public bool IsBlack { get; set; }
+        public BoardSquare CurrentBoardSquare { get; set; }
+        public Image PieceImage { get; set; }
 
+        protected Piece(BoardSquare startSquare, bool isBlack)
+        {
+            CurrentBoardSquare = startSquare;
+            CurrentBoardSquare.CurrentPiece = this;
+            IsBlack = isBlack;
+        }
 
+        public abstract List<BoardSquare> GetLegalMoves(BoardSquare[,] board);
+    }
+
+    public class Rook : Piece
+    {
+        public Rook(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
+        {
+            
+        }
+
+        public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
+        {
+            var row = CurrentBoardSquare.Row;
+            var column = CurrentBoardSquare.Column;
+            var legalMoves = new List<BoardSquare>();
+
+            legalMoves.AddRange(StraightMoves(board, row, column, 1, 0));
+            legalMoves.AddRange(StraightMoves(board, row, column, -1, 0));
+            legalMoves.AddRange(StraightMoves(board, row, column, 0, 1));
+            legalMoves.AddRange(StraightMoves(board, row, column, 0, -1));
+
+            return legalMoves;
+        }
+
+        private List<BoardSquare> StraightMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        {
+            var straightMoves = new List<BoardSquare>();
+
+            var r = row + rowDir;
+            var c = column + columnDir;
+
+            while (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
+            {
+                var square = board[r, c];
+
+                if (square.CurrentPiece != null)
+                {
+                    if (square.CurrentPiece.IsBlack != this.IsBlack)
+                    {
+                        straightMoves.Add(square);
+                    }
+
+                    break;
+                }
+
+                straightMoves.Add(square);
+
+                r += rowDir;
+                c += columnDir;
+            }
+            
+
+            return straightMoves;
+        }
     }
 }
