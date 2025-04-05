@@ -12,12 +12,16 @@ namespace Chess
 
         private void Form1_Resize(object sender, System.EventArgs e)
         {
+            // Sets variables to window width and height
             var width = this.ClientSize.Width;
             var height = this.ClientSize.Height;
 
+            // The new board width and height are a percentage of the total window width and height
             var newBoardWidth = (int)(width * 0.7);
             var newBoardHeight = (int)(height * 0.7);
 
+            // Ensures that the board stays a square
+            // The width or height is only the smallest of the two dimensions
             if (newBoardWidth < newBoardHeight)
             {
                 chessBoard.Width = newBoardWidth;
@@ -28,6 +32,7 @@ namespace Chess
                 chessBoard.Height = newBoardHeight;
             }
 
+            // Sets the board centerpoint
             Point chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
         }
@@ -107,6 +112,7 @@ namespace Chess
             square.FlatAppearance.MouseDownBackColor = colour;
             square.FlatAppearance.MouseOverBackColor = colour;
             square.FlatAppearance.BorderColor = colour;
+
             square.Click += (sender, e) => OnSquareClick();
 
             return square;
