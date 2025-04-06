@@ -39,23 +39,23 @@ namespace Chess
 
     public class ChessBoard
     {
-        public BoardSquare[,] squares { get; set; }
+        public BoardSquare[,] Squares { get; set; }
 
-        public TableLayoutPanel chessBoard { get; }
+        public TableLayoutPanel ChessBoardTable { get; }
 
         public ChessBoard(TableLayoutPanel chessBoardPanel)
         {
-            chessBoard = chessBoardPanel;
+            ChessBoardTable = chessBoardPanel;
             GenerateBoard();
             GenerateStartingPieces();
         }
 
         private void GenerateBoard()
         {
-            var rows = chessBoard.RowCount;
-            var columns = chessBoard.ColumnCount;
+            var rows = ChessBoardTable.RowCount;
+            var columns = ChessBoardTable.ColumnCount;
 
-            squares = new BoardSquare[rows, columns];
+            Squares = new BoardSquare[rows, columns];
 
             bool colInt = false;
 
@@ -64,9 +64,10 @@ namespace Chess
                 for (int c = 0; c < columns; c++)
                 {
                     var square = new BoardSquare(r, c, colInt);
-                    squares[r, c] = square;
+                    Squares[r, c] = square;
+                    square.ChessBoard = this;
 
-                    chessBoard.Controls.Add(square.Button, c, r);
+                    ChessBoardTable.Controls.Add(square.Button, c, r);
                     colInt = !colInt;
                 }
                 colInt = !colInt;
@@ -75,15 +76,16 @@ namespace Chess
 
         public void GenerateStartingPieces()
         {
-            new Rook(squares[0, 0], true);
-            new Rook(squares[0, 7], true);
-            new Rook(squares[7, 0], false);
-            new Rook(squares[7, 7], false);
+            new Rook(Squares[0, 0], true);
+            new Rook(Squares[0, 7], true);
+            new Rook(Squares[7, 0], false);
+            new Rook(Squares[7, 7], false);
         }
     }
          
     public class BoardSquare
     {
+        public ChessBoard ChessBoard {  get; set; }
         public int Row {  get; set; }
         public int Column { get; set; }
         public bool Colour { get; set; }
@@ -116,29 +118,45 @@ namespace Chess
             }
 
             square.Dock = DockStyle.Fill;
-            square.BackColor = colour;
-            
-            square.FlatAppearance.MouseDownBackColor = colour;
-            square.FlatAppearance.MouseOverBackColor = colour;
-            square.FlatAppearance.BorderColor = colour;
+
+            ChangeColour(square, colour);
 
             square.Click += (sender, e) => OnSquareClick();
 
             return square;
         }
 
+        public void ChangeColour(Button square, Color colour)
+        {
+            square.BackColor = colour;
+            square.FlatAppearance.MouseDownBackColor = colour;
+            square.FlatAppearance.MouseOverBackColor = colour;
+            square.FlatAppearance.BorderColor = colour;
+        }
+
         public void OnSquareClick()
         {
-            string pieceColour;
-            if (CurrentPiece.IsBlack)
+            if (CurrentPiece != null)
             {
-                pieceColour = "Black";
-            } else
-            {
-                pieceColour = "White";
-            }
+                var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
 
-            MessageBox.Show($"There is a {pieceColour} {CurrentPiece.GetType().Name} on this square.");
+                foreach (var move in legalMoves)
+                {
+                    move.Button.BackColor = Color.Green;
+                    if (move.Colour)
+                    {
+                        move.ChangeColour(move.Button, Color.DarkGreen);
+                    }
+                    else
+                    {
+                        move.ChangeColour(move.Button, Color.LightGreen);
+                    }
+                }
+            } 
+            else
+            {
+                return;
+            }
         }
     }
 
@@ -196,7 +214,6 @@ namespace Chess
                     {
                         straightMoves.Add(square);
                     }
-
                     break;
                 }
 
@@ -205,8 +222,6 @@ namespace Chess
                 r += rowDir;
                 c += columnDir;
             }
-            
-
             return straightMoves;
         }
     }
