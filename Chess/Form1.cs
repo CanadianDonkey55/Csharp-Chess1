@@ -50,7 +50,7 @@ namespace Chess
             GenerateStartingPieces();
         }
 
-        private void GenerateBoard()
+        public void GenerateBoard()
         {
             var rows = ChessBoardTable.RowCount;
             var columns = ChessBoardTable.ColumnCount;
@@ -76,10 +76,32 @@ namespace Chess
 
         public void GenerateStartingPieces()
         {
+            // Rooks
             new Rook(Squares[0, 0], true);
             new Rook(Squares[0, 7], true);
             new Rook(Squares[7, 0], false);
             new Rook(Squares[7, 7], false);
+
+            // Bishops
+            new Bishop(Squares[0, 2], true);
+            new Bishop(Squares[0, 5], true);
+            new Bishop(Squares[7, 2], false);
+            new Bishop(Squares[7, 5], false);
+
+            // Queens
+            new Queen(Squares[0, 3], true);
+            new Queen(Squares[7, 3], false);
+        }
+
+        public void ResetAllSquareColours()
+        {
+            for (int r = 0; r < Squares.GetLength(0); r++)
+            {
+                for (int c = 0; c < Squares.GetLength(1); c++)
+                {
+                    Squares[r, c].ResetColour();
+                }
+            }
         }
     }
          
@@ -88,7 +110,7 @@ namespace Chess
         public ChessBoard ChessBoard {  get; set; }
         public int Row {  get; set; }
         public int Column { get; set; }
-        public bool Colour { get; set; }
+        public bool IsBlack { get; set; }
         public Button Button { get; set; }
         public Piece CurrentPiece { get; set; }
 
@@ -97,24 +119,24 @@ namespace Chess
             Row = row;
             Column = column;
 
-            Colour = colour;
+            IsBlack = colour;
             Button = SquareTemplate(colour);
         }
 
-        public Button SquareTemplate(bool backColour)
+        public Button SquareTemplate(bool isBlack)
         {
             var square = new Button();
 
             square.FlatStyle = FlatStyle.Flat;
             Color colour;
 
-            if (!backColour)
+            if (isBlack)
             {
-                colour = Color.White;
+                colour = Color.Black;
             } 
             else
             {
-                colour = Color.Black;
+                colour = Color.White;
             }
 
             square.Dock = DockStyle.Fill;
@@ -134,8 +156,22 @@ namespace Chess
             square.FlatAppearance.BorderColor = colour;
         }
 
+        public void ResetColour()
+        {
+            if (IsBlack)
+            {
+                ChangeColour(Button, Color.Black);
+            }
+            else
+            {
+                ChangeColour(Button, Color.White);
+            }
+        }
+
         public void OnSquareClick()
         {
+            ChessBoard.ResetAllSquareColours();
+
             if (CurrentPiece != null)
             {
                 var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
@@ -143,7 +179,7 @@ namespace Chess
                 foreach (var move in legalMoves)
                 {
                     move.Button.BackColor = Color.Green;
-                    if (move.Colour)
+                    if (move.IsBlack)
                     {
                         move.ChangeColour(move.Button, Color.DarkGreen);
                     }
@@ -223,6 +259,141 @@ namespace Chess
                 c += columnDir;
             }
             return straightMoves;
+        }
+    }
+
+    public class Bishop : Piece
+    {
+        public Bishop(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
+        {
+
+        }
+
+        public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
+        {
+            var row = CurrentBoardSquare.Row;
+            var column = CurrentBoardSquare.Column;
+            var legalMoves = new List<BoardSquare>();
+
+            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, 1));
+            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, 1));
+            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, -1));
+            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, -1));
+
+            return legalMoves;
+        }
+
+        private List<BoardSquare> DiagonalMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        {
+            var diagonalMoves = new List<BoardSquare>();
+
+            var r = row + rowDir;
+            var c = column + columnDir;
+
+            while (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
+            {
+                var square = board[r, c];
+
+                if (square.CurrentPiece != null)
+                {
+                    if (square.CurrentPiece.IsBlack != this.IsBlack)
+                    {
+                        diagonalMoves.Add(square);
+                    }
+                    break;
+                }
+
+                diagonalMoves.Add(square);
+
+                r += rowDir;
+                c += columnDir;
+            }
+            return diagonalMoves;
+        }
+    }
+
+    public class Queen : Piece
+    {
+        public Queen(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack) 
+        {
+
+        }
+
+        public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
+        {
+            var row = CurrentBoardSquare.Row;
+            var column = CurrentBoardSquare.Column;
+            var legalMoves = new List<BoardSquare>();
+
+            // Straight moves
+            legalMoves.AddRange(StraightMoves(board, row, column, 1, 0));
+            legalMoves.AddRange(StraightMoves(board, row, column, -1, 0));
+            legalMoves.AddRange(StraightMoves(board, row, column, 0, 1));
+            legalMoves.AddRange(StraightMoves(board, row, column, 0, -1));
+
+            // Diagonal moves
+            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, 1));
+            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, 1));
+            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, -1));
+            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, -1));
+
+            return legalMoves;
+        }
+
+        private List<BoardSquare> StraightMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        {
+            var straightMoves = new List<BoardSquare>();
+
+            var r = row + rowDir;
+            var c = column + columnDir;
+
+            while (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
+            {
+                var square = board[r, c];
+
+                if (square.CurrentPiece != null)
+                {
+                    if (square.CurrentPiece.IsBlack != this.IsBlack)
+                    {
+                        straightMoves.Add(square);
+                    }
+                    break;
+                }
+
+                straightMoves.Add(square);
+
+                r += rowDir;
+                c += columnDir;
+            }
+            return straightMoves;
+        }
+
+        private List<BoardSquare> DiagonalMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        {
+            var diagonalMoves = new List<BoardSquare>();
+
+            var r = row + rowDir;
+            var c = column + columnDir;
+
+            while (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
+            {
+                var square = board[r, c];
+
+                if (square.CurrentPiece != null)
+                {
+                    if (square.CurrentPiece.IsBlack != this.IsBlack)
+                    {
+                        diagonalMoves.Add(square);
+                    }
+                    break;
+                }
+
+                diagonalMoves.Add(square);
+
+                r += rowDir;
+                c += columnDir;
+            }
+            return diagonalMoves;
         }
     }
 }
