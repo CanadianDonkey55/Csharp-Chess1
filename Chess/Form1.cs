@@ -1,4 +1,5 @@
 using System;
+using System.Data.SqlTypes;
 
 namespace Chess
 {
@@ -117,6 +118,12 @@ namespace Chess
             new Pawn(Squares[1, 5], true);
             new Pawn(Squares[1, 6], true);
             new Pawn(Squares[1, 7], true);
+
+            // Knights
+            new Knight(Squares[0, 1], true);
+            new Knight(Squares[0, 6], true);
+            new Knight(Squares[7, 1], false);
+            new Knight(Squares[7, 6], false);
         }
 
         public void ResetAllSquareColours()
@@ -214,6 +221,17 @@ namespace Chess
                         move.ChangeColour(move.Button, Color.LightGreen);
                     }
                 }
+
+                if (CurrentPiece.CurrentBoardSquare.IsBlack)
+                {
+                    CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.DarkGoldenrod);
+                } 
+                else
+                {
+                    CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.Gold);
+                }
+
+
             } 
             else
             {
@@ -222,6 +240,7 @@ namespace Chess
         }
     }
 
+    #region Pieces
     public abstract class Piece
     {
         public bool IsBlack { get; set; }
@@ -491,4 +510,83 @@ namespace Chess
             return moves;
         }
     }
+
+    public class Knight : Piece
+    {
+        public Knight(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack) 
+        {
+
+        }
+
+        public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
+        {
+            var row = CurrentBoardSquare.Row;
+            var column = CurrentBoardSquare.Column;
+            var legalMoves = new List<BoardSquare>();
+
+            legalMoves.AddRange(Moves(board, row, column, 1, 0));
+            legalMoves.AddRange(Moves(board, row, column, -1, 0));
+            legalMoves.AddRange(Moves(board, row, column, 0, 1));
+            legalMoves.AddRange(Moves(board, row, column, 0, -1));
+
+            return legalMoves;
+        }
+
+        private List<BoardSquare> Moves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        {
+            var moves = new List<BoardSquare>();
+
+            int r = row + rowDir * 2;
+            int c = column + columnDir * 2;
+
+            // Goes out two spaces away from the knight
+            if (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
+            {
+                var square = board[r, c];
+
+                // Check for spaces above and below
+                if (rowDir == 0) { 
+                    if (r + 1 < board.GetLength(0))
+                    {
+                        var above = board[r + 1, c];
+                        if (above.CurrentPiece == null || above.CurrentPiece.IsBlack != this.IsBlack)
+                        {
+                            moves.Add(above);
+                        }
+                    }
+                    if (r - 1 >= 0)
+                    {
+                        var below = board[r - 1, c];
+                        if (below.CurrentPiece == null || below.CurrentPiece.IsBlack != this.IsBlack)
+                        {
+                            moves.Add(below);
+                        }
+                    }
+                }
+
+                // Check for spaces to the left and right 
+                if (columnDir == 0)
+                {
+                    if (c + 1 < board.GetLength(1))
+                    {
+                        var right = board[r, c + 1];
+                        if (right.CurrentPiece == null || right.CurrentPiece.IsBlack != this.IsBlack)
+                        {
+                            moves.Add(right);
+                        }
+                    }
+                    if (c - 1 >= 0)
+                    {
+                        var left = board[r, c - 1];
+                        if (left.CurrentPiece == null || left.CurrentPiece.IsBlack != this.IsBlack)
+                        {
+                            moves.Add(left);
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+    }
+    #endregion
 }
