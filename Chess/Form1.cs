@@ -1,3 +1,5 @@
+using System;
+
 namespace Chess
 {
     public partial class Form1 : Form
@@ -91,6 +93,30 @@ namespace Chess
             // Queens
             new Queen(Squares[0, 3], true);
             new Queen(Squares[7, 3], false);
+
+            // Kings
+            new King(Squares[0, 4], true);
+            new King(Squares[7, 4], false);
+
+            // White Pawns
+            new Pawn(Squares[6, 0], false);
+            new Pawn(Squares[6, 1], false);
+            new Pawn(Squares[6, 2], false);
+            new Pawn(Squares[6, 3], false);
+            new Pawn(Squares[6, 4], false);
+            new Pawn(Squares[6, 5], false);
+            new Pawn(Squares[6, 6], false);
+            new Pawn(Squares[6, 7], false);
+
+            // Black Pawns
+            new Pawn(Squares[1, 0], true);
+            new Pawn(Squares[1, 1], true);
+            new Pawn(Squares[1, 2], true);
+            new Pawn(Squares[1, 3], true);
+            new Pawn(Squares[1, 4], true);
+            new Pawn(Squares[1, 5], true);
+            new Pawn(Squares[1, 6], true);
+            new Pawn(Squares[1, 7], true);
         }
 
         public void ResetAllSquareColours()
@@ -326,23 +352,21 @@ namespace Chess
             var legalMoves = new List<BoardSquare>();
 
             // Straight moves
-            legalMoves.AddRange(StraightMoves(board, row, column, 1, 0));
-            legalMoves.AddRange(StraightMoves(board, row, column, -1, 0));
-            legalMoves.AddRange(StraightMoves(board, row, column, 0, 1));
-            legalMoves.AddRange(StraightMoves(board, row, column, 0, -1));
-
-            // Diagonal moves
-            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, 1));
-            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, 1));
-            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, -1));
-            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, -1));
+            legalMoves.AddRange(Moves(board, row, column, 1, 0));
+            legalMoves.AddRange(Moves(board, row, column, -1, 0));
+            legalMoves.AddRange(Moves(board, row, column, 0, 1));
+            legalMoves.AddRange(Moves(board, row, column, 0, -1));
+            legalMoves.AddRange(Moves(board, row, column, 1, 1));
+            legalMoves.AddRange(Moves(board, row, column, -1, 1));
+            legalMoves.AddRange(Moves(board, row, column, 1, -1));
+            legalMoves.AddRange(Moves(board, row, column, -1, -1));
 
             return legalMoves;
         }
 
-        private List<BoardSquare> StraightMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        private List<BoardSquare> Moves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
         {
-            var straightMoves = new List<BoardSquare>();
+            var moves = new List<BoardSquare>();
 
             var r = row + rowDir;
             var c = column + columnDir;
@@ -355,45 +379,116 @@ namespace Chess
                 {
                     if (square.CurrentPiece.IsBlack != this.IsBlack)
                     {
-                        straightMoves.Add(square);
+                        moves.Add(square);
                     }
                     break;
                 }
 
-                straightMoves.Add(square);
+                moves.Add(square);
 
                 r += rowDir;
                 c += columnDir;
             }
-            return straightMoves;
+            return moves;
+        }
+    }
+
+    public class King : Piece
+    {
+        public King(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
+        {
+            
         }
 
-        private List<BoardSquare> DiagonalMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
         {
-            var diagonalMoves = new List<BoardSquare>();
+            var row = CurrentBoardSquare.Row;
+            var column = CurrentBoardSquare.Column;
+            var legalMoves = new List<BoardSquare>();
+
+            legalMoves.AddRange(Moves(board, row, column, 1, 0));
+            legalMoves.AddRange(Moves(board, row, column, -1, 0));
+            legalMoves.AddRange(Moves(board, row, column, 0, 1));
+            legalMoves.AddRange(Moves(board, row, column, 0, -1));
+            legalMoves.AddRange(Moves(board, row, column, 1, 1));
+            legalMoves.AddRange(Moves(board, row, column, -1, 1));
+            legalMoves.AddRange(Moves(board, row, column, 1, -1));
+            legalMoves.AddRange(Moves(board, row, column, -1, -1));
+
+            return legalMoves;
+        }
+
+        private List<BoardSquare> Moves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        {
+            var moves = new List<BoardSquare>();
 
             var r = row + rowDir;
             var c = column + columnDir;
 
-            while (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
+            if (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
             {
                 var square = board[r, c];
 
-                if (square.CurrentPiece != null)
+                if (square.CurrentPiece == null || square.CurrentPiece.IsBlack != this.IsBlack)
                 {
-                    if (square.CurrentPiece.IsBlack != this.IsBlack)
-                    {
-                        diagonalMoves.Add(square);
-                    }
-                    break;
+                    moves.Add(square);
                 }
-
-                diagonalMoves.Add(square);
-
-                r += rowDir;
-                c += columnDir;
             }
-            return diagonalMoves;
+            return moves;
+        }
+    }
+
+    public class Pawn : Piece
+    {
+        public bool firstTurn = true;
+
+        public Pawn(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
+        {
+
+        }
+
+        public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
+        {
+            var row = CurrentBoardSquare.Row;
+            var column = CurrentBoardSquare.Column;
+            var legalMoves = new List<BoardSquare>();
+
+            legalMoves.AddRange(Moves(board, row, column));
+
+            return legalMoves;
+        }
+
+        private List<BoardSquare> Moves(BoardSquare[,] board, int row, int column)
+        {
+            var moves = new List<BoardSquare>();
+            int direction;
+
+            if (this.IsBlack)
+            {
+                direction = 1;
+            } 
+            else
+            {
+                direction = -1;
+            }
+
+            var r = row + direction;
+            var square = board[r, column];
+            
+            if (square.CurrentPiece == null)
+            {
+                moves.Add(square);
+                if (firstTurn)
+                {
+                    r += direction;
+                    square = board[r, column];
+                    if (square.CurrentPiece == null)
+                    {
+                        moves.Add(square);
+                    }
+                }
+            }
+            return moves;
         }
     }
 }
