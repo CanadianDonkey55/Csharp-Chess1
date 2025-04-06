@@ -1,5 +1,4 @@
 using System;
-using System.Data.SqlTypes;
 
 namespace Chess
 {
@@ -8,7 +7,7 @@ namespace Chess
         public Form1()
         {
             InitializeComponent();
-            ChessBoard board = new ChessBoard(chessBoard);
+            var board = new ChessBoard(chessBoard);
         }
 
         private void Form1_Resize(object sender, System.EventArgs e)
@@ -35,7 +34,7 @@ namespace Chess
             }
 
             // Sets the board centerpoint
-            Point chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
+            var chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
         }
     }
@@ -44,16 +43,18 @@ namespace Chess
     {
         public BoardSquare[,] Squares { get; set; }
 
-        public TableLayoutPanel ChessBoardTable { get; }
+        private TableLayoutPanel ChessBoardTable { get; }
+        public bool IsWhiteTurn { get; set; } = true;
 
         public ChessBoard(TableLayoutPanel chessBoardPanel)
         {
+            IsWhiteTurn = true;
             ChessBoardTable = chessBoardPanel;
             GenerateBoard();
             GenerateStartingPieces();
         }
 
-        public void GenerateBoard()
+        private void GenerateBoard()
         {
             var rows = ChessBoardTable.RowCount;
             var columns = ChessBoardTable.ColumnCount;
@@ -77,7 +78,7 @@ namespace Chess
             }
         }
 
-        public void GenerateStartingPieces()
+        private void GenerateStartingPieces()
         {
             // Rooks
             new Rook(Squares[0, 0], true);
@@ -128,9 +129,9 @@ namespace Chess
 
         public void ResetAllSquareColours()
         {
-            for (int r = 0; r < Squares.GetLength(0); r++)
+            for (var r = 0; r < Squares.GetLength(0); r++)
             {
-                for (int c = 0; c < Squares.GetLength(1); c++)
+                for (var c = 0; c < Squares.GetLength(1); c++)
                 {
                     Squares[r, c].ResetColour();
                 }
@@ -143,7 +144,7 @@ namespace Chess
         public ChessBoard ChessBoard {  get; set; }
         public int Row {  get; set; }
         public int Column { get; set; }
-        public bool IsBlack { get; set; }
+        private bool IsBlack { get; set; }
         public Button Button { get; set; }
         public Piece CurrentPiece { get; set; }
 
@@ -156,7 +157,7 @@ namespace Chess
             Button = SquareTemplate(colour);
         }
 
-        public Button SquareTemplate(bool isBlack)
+        private Button SquareTemplate(bool isBlack)
         {
             var square = new Button();
 
@@ -176,12 +177,12 @@ namespace Chess
 
             ChangeColour(square, colour);
 
-            square.Click += (sender, e) => OnSquareClick();
+            square.MouseDown += (sender, e) => OnSquareClick();
 
             return square;
         }
 
-        public void ChangeColour(Button square, Color colour)
+        private void ChangeColour(Button square, Color colour)
         {
             square.BackColor = colour;
             square.FlatAppearance.MouseDownBackColor = colour;
@@ -201,7 +202,12 @@ namespace Chess
             }
         }
 
-        public void OnSquareClick()
+        private void OnSquareClick()
+        {
+            LeftClick();
+        }
+
+        private void LeftClick()
         {
             ChessBoard.ResetAllSquareColours();
 
@@ -209,30 +215,32 @@ namespace Chess
             {
                 var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
 
-                foreach (var move in legalMoves)
+                if (ChessBoard.IsWhiteTurn != CurrentPiece.IsBlack)
                 {
-                    move.Button.BackColor = Color.Green;
-                    if (move.IsBlack)
+                    foreach (var move in legalMoves)
                     {
-                        move.ChangeColour(move.Button, Color.DarkGreen);
+                        move.Button.BackColor = Color.Green;
+                        if (move.IsBlack)
+                        {
+                            move.ChangeColour(move.Button, Color.DarkGreen);
+                        }
+                        else
+                        {
+                            move.ChangeColour(move.Button, Color.LightGreen);
+                        }
+                    }
+
+                    if (CurrentPiece.CurrentBoardSquare.IsBlack)
+                    {
+                        CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.Goldenrod);
                     }
                     else
                     {
-                        move.ChangeColour(move.Button, Color.LightGreen);
+                        CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.Gold);
                     }
                 }
 
-                if (CurrentPiece.CurrentBoardSquare.IsBlack)
-                {
-                    CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.DarkGoldenrod);
-                } 
-                else
-                {
-                    CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.Gold);
-                }
-
-
-            } 
+            }
             else
             {
                 return;
