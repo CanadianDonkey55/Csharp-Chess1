@@ -331,15 +331,15 @@ namespace Chess
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
-            legalMoves.AddRange(StraightMoves(board, row, column, 1, 0));
-            legalMoves.AddRange(StraightMoves(board, row, column, -1, 0));
-            legalMoves.AddRange(StraightMoves(board, row, column, 0, 1));
-            legalMoves.AddRange(StraightMoves(board, row, column, 0, -1));
+            legalMoves.AddRange(Moves(board, row, column, 1, 0));
+            legalMoves.AddRange(Moves(board, row, column, -1, 0));
+            legalMoves.AddRange(Moves(board, row, column, 0, 1));
+            legalMoves.AddRange(Moves(board, row, column, 0, -1));
 
             return legalMoves;
         }
 
-        private List<BoardSquare> StraightMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        private List<BoardSquare> Moves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
         {
             var straightMoves = new List<BoardSquare>();
 
@@ -381,15 +381,15 @@ namespace Chess
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
-            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, 1));
-            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, 1));
-            legalMoves.AddRange(DiagonalMoves(board, row, column, 1, -1));
-            legalMoves.AddRange(DiagonalMoves(board, row, column, -1, -1));
+            legalMoves.AddRange(Moves(board, row, column, 1, 1));
+            legalMoves.AddRange(Moves(board, row, column, -1, 1));
+            legalMoves.AddRange(Moves(board, row, column, 1, -1));
+            legalMoves.AddRange(Moves(board, row, column, -1, -1));
 
             return legalMoves;
         }
 
-        private List<BoardSquare> DiagonalMoves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
+        private List<BoardSquare> Moves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
         {
             var diagonalMoves = new List<BoardSquare>();
 
