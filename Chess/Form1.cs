@@ -168,7 +168,7 @@ namespace Chess
 
             square.Dock = DockStyle.Fill;
 
-            square.MouseDown += (sender, e) => OnSquareClick(sender, e);
+            square.MouseDown += (sender, e) => OnSquareClick(e);
 
             return square;
         }
@@ -193,7 +193,7 @@ namespace Chess
             }
         }
 
-        private void OnSquareClick(object sender, MouseEventArgs e)
+        private void OnSquareClick(MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
@@ -209,12 +209,14 @@ namespace Chess
         {
             ChessBoard.ResetAllSquareColours();
 
+            
             if (CurrentPiece != null)
             {
-                var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
-
                 if (ChessBoard.IsWhiteTurn != CurrentPiece.IsBlack)
                 {
+                    CurrentPiece.IsSelected = true;
+                    var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
+
                     foreach (var move in legalMoves)
                     {
                         move.Button.BackColor = Color.Green;
@@ -241,12 +243,38 @@ namespace Chess
             }
             else
             {
-                return;
+                foreach (var square in ChessBoard.Squares)
+                {
+                    if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
+                    {
+                        Move(square);
+                        break;
+                    }
+                    else if (square.CurrentPiece == null)
+                    {
+                        foreach (var selectedSquare in ChessBoard.Squares)
+                        {
+                            if (selectedSquare.CurrentPiece != null && selectedSquare.CurrentPiece.IsSelected)
+                            {
+                                selectedSquare.CurrentPiece.IsSelected = false;
+                                Move(selectedSquare);
+                                ChessBoard.ResetAllSquareColours();
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 
         private void RightClick()
         {
+            if (Button.BackColor == Color.Maroon || Button.BackColor == Color.Red)
+            {
+                ResetColour();
+                return;
+            }
+
             if (IsBlack)
             {
                 ChangeColour(Button, Color.Maroon);
@@ -254,6 +282,19 @@ namespace Chess
             else
             {
                 ChangeColour(Button, Color.Red);
+            }
+        }
+
+        private void Move(BoardSquare square)
+        {
+            var legalMoves = square.CurrentPiece.GetLegalMoves(ChessBoard.Squares);
+
+            if (legalMoves.Contains(this))
+            {
+                CurrentPiece = square.CurrentPiece;
+                square.CurrentPiece.CurrentBoardSquare = this;
+                square.CurrentPiece = null;
+                ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
             }
         }
     }
@@ -264,12 +305,14 @@ namespace Chess
         public bool IsBlack { get; set; }
         public BoardSquare CurrentBoardSquare { get; set; }
         public Image PieceImage { get; set; }
+        public bool IsSelected { get; set; }
 
         protected Piece(BoardSquare startSquare, bool isBlack)
         {
             CurrentBoardSquare = startSquare;
             CurrentBoardSquare.CurrentPiece = this;
             IsBlack = isBlack;
+            IsSelected = false;
         }
 
         public abstract List<BoardSquare> GetLegalMoves(BoardSquare[,] board);
