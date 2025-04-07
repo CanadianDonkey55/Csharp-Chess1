@@ -177,7 +177,7 @@ namespace Chess
 
             ChangeColour(square, colour);
 
-            square.MouseDown += (sender, e) => OnSquareClick();
+            square.MouseDown += (sender, e) => OnSquareClick(sender, e);
 
             return square;
         }
@@ -202,9 +202,16 @@ namespace Chess
             }
         }
 
-        private void OnSquareClick()
+        private void OnSquareClick(object sender, MouseEventArgs e)
         {
-            LeftClick();
+            if (e.Button == MouseButtons.Left)
+            {
+                LeftClick();
+            } 
+            else if (e.Button == MouseButtons.Right)
+            {
+                RightClick();
+            }
         }
 
         private void LeftClick()
@@ -244,6 +251,18 @@ namespace Chess
             else
             {
                 return;
+            }
+        }
+
+        private void RightClick()
+        {
+            if (IsBlack)
+            {
+                ChangeColour(Button, Color.Maroon);
+            }
+            else
+            {
+                ChangeColour(Button, Color.Red);
             }
         }
     }
