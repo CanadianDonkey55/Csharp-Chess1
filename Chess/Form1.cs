@@ -154,28 +154,19 @@ namespace Chess
             Column = column;
 
             IsBlack = colour;
-            Button = SquareTemplate(colour);
+            Button = SquareTemplate();
         }
 
-        private Button SquareTemplate(bool isBlack)
+        private Button SquareTemplate()
         {
             var square = new Button();
 
             square.FlatStyle = FlatStyle.Flat;
-            Color colour;
-
-            if (isBlack)
-            {
-                colour = Color.Black;
-            } 
-            else
-            {
-                colour = Color.White;
-            }
+            
+            this.Button = square;
+            ResetColour();
 
             square.Dock = DockStyle.Fill;
-
-            ChangeColour(square, colour);
 
             square.MouseDown += (sender, e) => OnSquareClick(sender, e);
 
