@@ -26,7 +26,7 @@ namespace Chess
             {
                 chessBoard.Width = newBoardWidth;
                 chessBoard.Height = newBoardWidth;
-            } 
+            }
             else
             {
                 chessBoard.Width = newBoardHeight;
@@ -46,11 +46,19 @@ namespace Chess
         private TableLayoutPanel ChessBoardTable { get; }
         public bool IsWhiteTurn { get; set; } = true;
 
+        // Contructor
         public ChessBoard(TableLayoutPanel chessBoardPanel)
         {
+            // White always goes first
             IsWhiteTurn = true;
+
+            // The table is equal to the table in the designer
             ChessBoardTable = chessBoardPanel;
+
+            // Generates the board wuth all their squares
             GenerateBoard();
+
+            // Places the pieces on their starting squares
             GenerateStartingPieces();
         }
 
@@ -80,6 +88,9 @@ namespace Chess
 
         private void GenerateStartingPieces()
         {
+            // The first value of the array is their row, the second is the column
+            // The bool is if the piece is black or white (true = white, false = black)
+
             // Rooks
             new Rook(Squares[0, 0], true);
             new Rook(Squares[0, 7], true);
@@ -127,6 +138,7 @@ namespace Chess
             new Knight(Squares[7, 6], false);
         }
 
+        // Resets the colour of every square
         public void ResetAllSquareColours()
         {
             for (var r = 0; r < Squares.GetLength(0); r++)
@@ -150,31 +162,34 @@ namespace Chess
 
         public BoardSquare(int row, int column, bool colour)
         {
+            // The row and columns are equal to the row and column set in the ChessBoard class
             Row = row;
             Column = column;
 
+            // If the square is black or white and creates each button based on a template
             IsBlack = colour;
             Button = SquareTemplate();
         }
 
         private Button SquareTemplate()
         {
+            // Sets all of the button colours and makes the OnSquareClick method an event
+
             var square = new Button();
 
             square.FlatStyle = FlatStyle.Flat;
-            
             this.Button = square;
             ResetColour();
-
             square.Dock = DockStyle.Fill;
 
             square.MouseDown += (sender, e) => OnSquareClick(e);
-
             return square;
         }
 
         private void ChangeColour(Button square, Color colour)
         {
+            // Each square colour is equal to the colour set in the constructor
+
             square.BackColor = colour;
             square.FlatAppearance.MouseDownBackColor = colour;
             square.FlatAppearance.MouseOverBackColor = colour;
@@ -183,6 +198,7 @@ namespace Chess
 
         public void ResetColour()
         {
+            // If the bool IsBlack is true, the square colour is set to black, else it's white
             if (IsBlack)
             {
                 ChangeColour(Button, Color.Black);
@@ -195,6 +211,8 @@ namespace Chess
 
         private void OnSquareClick(MouseEventArgs e)
         {
+            // If you left click a square, LeftClick(), if you right click a square RightClick()
+
             if (e.Button == MouseButtons.Left)
             {
                 LeftClick();
@@ -207,8 +225,13 @@ namespace Chess
 
         private void LeftClick()
         {
+            // Calls the method to reset the colour of every square on the board back to either black or white
             ChessBoard.ResetAllSquareColours();
 
+            // Goes through every square on the board and checks to find the one that is currently seleced
+            // If it finds one, it gets all the legal moves of the piece on that square and sees if the currently selected square is one of that pieces legal moves
+            // If it is, that piece is moved to this square and the method is returned
+            // If no piece that is selected is found, the method continues
             foreach (var square in ChessBoard.Squares)
             {
                 if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
@@ -217,18 +240,31 @@ namespace Chess
                     if (legalMoves.Contains(this))
                     {
                         Move(square);
-                        break;
+                        return;
                     }
                 }
             }
-
+            
+            // If the clicked square is not empty (ie, has a piece on it)
             if (CurrentPiece != null)
             {
+                // If the currently seleccted piece is the same colour as the player turn
                 if (ChessBoard.IsWhiteTurn != CurrentPiece.IsBlack)
                 {
+                    // If it finds another piece on your team is already selected, unselect that piece
+                    foreach (var square in ChessBoard.Squares)
+                    {
+                        if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
+                        {
+                            square.CurrentPiece.IsSelected = false;
+                            break;
+                        }
+                    }
+                    // Select this piece and create a list of squares that are legal for the selected piece to move to
                     CurrentPiece.IsSelected = true;
                     var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
 
+                    // Highlights legal squares in either dark green or light green depending on if that square is black or white
                     foreach (var move in legalMoves)
                     {
                         move.Button.BackColor = Color.Green;
@@ -242,6 +278,7 @@ namespace Chess
                         }
                     }
 
+                    // Highlights this square either dark or light yellow depending on if it's black or white
                     if (IsBlack)
                     {
                         ChangeColour(Button, Color.Goldenrod);
@@ -259,6 +296,7 @@ namespace Chess
 
         private void RightClick()
         {
+            // If you right click a square that is already red, reset that square back to it's original colour
             if (Button.BackColor == Color.Maroon || Button.BackColor == Color.Red)
             {
                 ResetColour();
@@ -284,12 +322,18 @@ namespace Chess
                 pawn.firstTurn = false;
             }
             
+            // If the current space is not null, (if there is an enemy piece here) make it null
             if (CurrentPiece != null)
                 
             {
                 CurrentPiece = null;
             }
 
+            // The current piece is the same as the piece on the old square
+            // The piece on the old square is now on this square
+            // The piece is no longer selected
+            // The square's current piece is now null
+            // Changes the turn
             CurrentPiece = square.CurrentPiece;
             square.CurrentPiece.CurrentBoardSquare = this;
             square.CurrentPiece.IsSelected = false;
@@ -309,12 +353,15 @@ namespace Chess
 
         protected Piece(BoardSquare startSquare, bool isBlack)
         {
+            // The current board square is the square that this piece starts on, and the square's current piece is this piece
             CurrentBoardSquare = startSquare;
             CurrentBoardSquare.CurrentPiece = this;
+            // If the piece is set to black in the ChessBoard class, it is black, and it is by default not selected
             IsBlack = isBlack;
             IsSelected = false;
         }
 
+        // A list of legal moves for each piece
         public abstract List<BoardSquare> GetLegalMoves(BoardSquare[,] board);
     }
 
@@ -322,15 +369,35 @@ namespace Chess
     {
         public Rook(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
-            
+            // Makes the image either the black or white version of this piece (applies to all pieces)
+            if (IsBlack)
+            {
+                PieceImage = Image.FromFile(@"Resources\BlackPieces\BlackRook.png");
+            }
+            else
+            {
+                PieceImage = Image.FromFile(@"Resources\WhitePieces\WhiteRook.png");
+            }
+
+            // If there is an image on this piece, it's width and height are set to the width and height of the square, the board square's image is this piece image, and it's centered on the square
+            if (PieceImage != null)
+            {
+                PieceImage = new Bitmap(PieceImage, CurrentBoardSquare.Button.Width, CurrentBoardSquare.Button.Height);
+
+                CurrentBoardSquare.Button.Image = PieceImage;
+                CurrentBoardSquare.Button.ImageAlign = ContentAlignment.MiddleCenter;
+            }
         }
 
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
         {
+            // Row and column are the row and column that this piece is currently on
+            // Makes a list of legal board square moves
             var row = CurrentBoardSquare.Row;
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
+            // Add the straight moves
             legalMoves.AddRange(Moves(board, row, column, 1, 0));
             legalMoves.AddRange(Moves(board, row, column, -1, 0));
             legalMoves.AddRange(Moves(board, row, column, 0, 1));
@@ -341,11 +408,14 @@ namespace Chess
 
         private List<BoardSquare> Moves(BoardSquare[,] board, int row, int column, int rowDir, int columnDir)
         {
+            // List of board squares which will be the legal moves
             var straightMoves = new List<BoardSquare>();
 
+            // r and c are the row or column that this piece is on, plus the direction that the piece can go (this method is called 4 times with each different direction
             var r = row + rowDir;
             var c = column + columnDir;
 
+            // Goes until it reaches the edge of the board or finds another piece, and adds all those squares as legal moves
             while (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
             {
                 var square = board[r, c];
@@ -364,6 +434,7 @@ namespace Chess
                 r += rowDir;
                 c += columnDir;
             }
+            // Returns a list of the legal moves
             return straightMoves;
         }
     }
@@ -372,8 +443,26 @@ namespace Chess
     {
         public Bishop(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
+            if (IsBlack)
+            {
+                PieceImage = Image.FromFile(@"Resources\BlackPieces\BlackBishop.png");
+            }
+            else
+            {
+                PieceImage = Image.FromFile(@"Resources\WhitePieces\WhiteBishop.png");
+            }
 
+
+            if (PieceImage != null)
+            {
+                PieceImage = new Bitmap(PieceImage, CurrentBoardSquare.Button.Width, CurrentBoardSquare.Button.Height);
+
+                CurrentBoardSquare.Button.Image = PieceImage;
+                CurrentBoardSquare.Button.ImageAlign = ContentAlignment.MiddleCenter;
+            }
         }
+
+        // Exact same methods as the rook, but with neither rowDir or columnDir 0 so that this piece travels diagonally
 
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
         {
@@ -381,6 +470,7 @@ namespace Chess
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
+            // Add the diagonal moves
             legalMoves.AddRange(Moves(board, row, column, 1, 1));
             legalMoves.AddRange(Moves(board, row, column, -1, 1));
             legalMoves.AddRange(Moves(board, row, column, 1, -1));
@@ -422,8 +512,26 @@ namespace Chess
     {
         public Queen(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack) 
         {
+            if (IsBlack)
+            {
+                PieceImage = Image.FromFile(@"Resources\BlackPieces\BlackQueen.png");
+            }
+            else
+            {
+                PieceImage = Image.FromFile(@"Resources\WhitePieces\WhiteQueen.png");
+            }
 
+
+            if (PieceImage != null)
+            {
+                PieceImage = new Bitmap(PieceImage, CurrentBoardSquare.Button.Width, CurrentBoardSquare.Button.Height);
+
+                CurrentBoardSquare.Button.Image = PieceImage;
+                CurrentBoardSquare.Button.ImageAlign = ContentAlignment.MiddleCenter;
+            }
         }
+
+        // Both the bishop and rook moves are legal
 
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
         {
@@ -431,7 +539,7 @@ namespace Chess
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
-            // Straight moves
+            // Straight moves and diagonal moves
             legalMoves.AddRange(Moves(board, row, column, 1, 0));
             legalMoves.AddRange(Moves(board, row, column, -1, 0));
             legalMoves.AddRange(Moves(board, row, column, 0, 1));
@@ -477,8 +585,26 @@ namespace Chess
     {
         public King(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
-            
+            if (IsBlack)
+            {
+                PieceImage = Image.FromFile(@"Resources\BlackPieces\BlackKing.png");
+            }
+            else
+            {
+                PieceImage = Image.FromFile(@"Resources\WhitePieces\WhiteKing.png");
+            }
+
+
+            if (PieceImage != null)
+            {
+                PieceImage = new Bitmap(PieceImage, CurrentBoardSquare.Button.Width, CurrentBoardSquare.Button.Height);
+
+                CurrentBoardSquare.Button.Image = PieceImage;
+                CurrentBoardSquare.Button.ImageAlign = ContentAlignment.MiddleCenter;
+            }
         }
+
+        // Same as the queen but with a limit of 1 square in every direction
 
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
         {
@@ -486,6 +612,7 @@ namespace Chess
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
+            // All directions
             legalMoves.AddRange(Moves(board, row, column, 1, 0));
             legalMoves.AddRange(Moves(board, row, column, -1, 0));
             legalMoves.AddRange(Moves(board, row, column, 0, 1));
@@ -524,15 +651,34 @@ namespace Chess
 
         public Pawn(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
+            if (IsBlack)
+            {
+                PieceImage = Image.FromFile(@"Resources\BlackPieces\BlackPawn.png");
+            }
+            else
+            {
+                PieceImage = Image.FromFile(@"Resources\WhitePieces\WhitePawn.png");
+            }
 
+
+            if (PieceImage != null)
+            {
+                PieceImage = new Bitmap(PieceImage, CurrentBoardSquare.Button.Width, CurrentBoardSquare.Button.Height);
+
+                CurrentBoardSquare.Button.Image = PieceImage;
+                CurrentBoardSquare.Button.ImageAlign = ContentAlignment.MiddleCenter;
+            }
         }
 
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
         {
+            // Gets the current row and column of this square 
+            // Creates a list of all legal moves
             var row = CurrentBoardSquare.Row;
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
+            // Add the position of this piece
             legalMoves.AddRange(Moves(board, row, column));
 
             return legalMoves;
@@ -576,7 +722,23 @@ namespace Chess
     {
         public Knight(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack) 
         {
+            if (IsBlack)
+            {
+                PieceImage = Image.FromFile(@"Resources\BlackPieces\DarkKnight.png");
+            }
+            else
+            {
+                PieceImage = Image.FromFile(@"Resources\WhitePieces\WhiteKnight.png");
+            }
 
+
+            if (PieceImage != null)
+            {
+                PieceImage = new Bitmap(PieceImage, CurrentBoardSquare.Button.Width, CurrentBoardSquare.Button.Height);
+
+                CurrentBoardSquare.Button.Image = PieceImage;
+                CurrentBoardSquare.Button.ImageAlign = ContentAlignment.MiddleCenter;
+            }
         }
 
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
@@ -585,6 +747,7 @@ namespace Chess
             var column = CurrentBoardSquare.Column;
             var legalMoves = new List<BoardSquare>();
 
+            // Add all four directions 
             legalMoves.AddRange(Moves(board, row, column, 1, 0));
             legalMoves.AddRange(Moves(board, row, column, -1, 0));
             legalMoves.AddRange(Moves(board, row, column, 0, 1));
