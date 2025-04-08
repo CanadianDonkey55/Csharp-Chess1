@@ -209,7 +209,19 @@ namespace Chess
         {
             ChessBoard.ResetAllSquareColours();
 
-            
+            foreach (var square in ChessBoard.Squares)
+            {
+                if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
+                {
+                    var legalMoves = square.CurrentPiece.GetLegalMoves(ChessBoard.Squares);
+                    if (legalMoves.Contains(this))
+                    {
+                        Move(square);
+                        break;
+                    }
+                }
+            }
+
             if (CurrentPiece != null)
             {
                 if (ChessBoard.IsWhiteTurn != CurrentPiece.IsBlack)
@@ -230,40 +242,18 @@ namespace Chess
                         }
                     }
 
-                    if (CurrentPiece.CurrentBoardSquare.IsBlack)
+                    if (IsBlack)
                     {
-                        CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.Goldenrod);
+                        ChangeColour(Button, Color.Goldenrod);
                     }
                     else
                     {
-                        CurrentPiece.CurrentBoardSquare.ChangeColour(CurrentPiece.CurrentBoardSquare.Button, Color.Gold);
+                        ChangeColour(Button, Color.Gold);
                     }
+
+                    return;
                 }
 
-            }
-            else
-            {
-                foreach (var square in ChessBoard.Squares)
-                {
-                    if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
-                    {
-                        Move(square);
-                        break;
-                    }
-                    else if (square.CurrentPiece == null)
-                    {
-                        foreach (var selectedSquare in ChessBoard.Squares)
-                        {
-                            if (selectedSquare.CurrentPiece != null && selectedSquare.CurrentPiece.IsSelected)
-                            {
-                                selectedSquare.CurrentPiece.IsSelected = false;
-                                Move(selectedSquare);
-                                ChessBoard.ResetAllSquareColours();
-                                break;
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -275,6 +265,7 @@ namespace Chess
                 return;
             }
 
+            // Makes dark squares a darker red and light squares a lighter red
             if (IsBlack)
             {
                 ChangeColour(Button, Color.Maroon);
@@ -287,15 +278,24 @@ namespace Chess
 
         private void Move(BoardSquare square)
         {
-            var legalMoves = square.CurrentPiece.GetLegalMoves(ChessBoard.Squares);
-
-            if (legalMoves.Contains(this))
+            // Stops pawns from moving multiple squares on subsequent turns
+            if (square.CurrentPiece is Pawn pawn)
             {
-                CurrentPiece = square.CurrentPiece;
-                square.CurrentPiece.CurrentBoardSquare = this;
-                square.CurrentPiece = null;
-                ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
+                pawn.firstTurn = false;
             }
+            
+            if (CurrentPiece != null)
+                
+            {
+                CurrentPiece = null;
+            }
+
+            CurrentPiece = square.CurrentPiece;
+            square.CurrentPiece.CurrentBoardSquare = this;
+            square.CurrentPiece.IsSelected = false;
+            square.CurrentPiece = null;
+
+            ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
         }
     }
 
