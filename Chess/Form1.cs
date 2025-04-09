@@ -348,6 +348,15 @@ namespace Chess
             Button.Image = square.Button.Image;
             square.Button.Image = null;
 
+            var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
+            foreach (var legalMove in legalMoves)
+            {
+                if (legalMove.CurrentPiece is King king)
+                {
+                    king.InCheck = true;
+                }
+            }
+
             ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
         }
     }
@@ -592,6 +601,8 @@ namespace Chess
 
     public class King : Piece
     {
+        public bool InCheck {  get; set; } = false;
+
         public King(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
             if (IsBlack)
@@ -614,7 +625,6 @@ namespace Chess
         }
 
         // Same as the queen but with a limit of 1 square in every direction
-
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
         {
             var row = CurrentBoardSquare.Row;
