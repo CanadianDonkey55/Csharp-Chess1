@@ -4,10 +4,11 @@ namespace Chess
 {
     public partial class Form1 : Form
     {
+        ChessBoard ChessBoard;
         public Form1()
         {
             InitializeComponent();
-            var board = new ChessBoard(chessBoard);
+            ChessBoard = new ChessBoard(chessBoard);
         }
 
         private void Form1_Resize(object sender, System.EventArgs e)
@@ -36,6 +37,11 @@ namespace Chess
             // Sets the board centerpoint
             var chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
+
+            //foreach (var square in ChessBoard.Squares)
+            //{
+            //    square.CurrentPiece.PieceImage = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
+            //}
         }
     }
 
@@ -156,7 +162,7 @@ namespace Chess
         public ChessBoard ChessBoard {  get; set; }
         public int Row {  get; set; }
         public int Column { get; set; }
-        private bool IsBlack { get; set; }
+        private bool IsDark { get; set; }
         public Button Button { get; set; }
         public Piece CurrentPiece { get; set; }
 
@@ -167,7 +173,7 @@ namespace Chess
             Column = column;
 
             // If the square is black or white and creates each button based on a template
-            IsBlack = colour;
+            IsDark = colour;
             Button = SquareTemplate();
         }
 
@@ -199,13 +205,13 @@ namespace Chess
         public void ResetColour()
         {
             // If the bool IsBlack is true, the square colour is set to black, else it's white
-            if (IsBlack)
+            if (IsDark)
             {
-                ChangeColour(Button, Color.Black);
+                ChangeColour(Button, Color.SaddleBrown);
             }
             else
             {
-                ChangeColour(Button, Color.White);
+                ChangeColour(Button, Color.BurlyWood);
             }
         }
 
@@ -268,7 +274,7 @@ namespace Chess
                     foreach (var move in legalMoves)
                     {
                         move.Button.BackColor = Color.Green;
-                        if (move.IsBlack)
+                        if (move.IsDark)
                         {
                             move.ChangeColour(move.Button, Color.DarkGreen);
                         }
@@ -279,7 +285,7 @@ namespace Chess
                     }
 
                     // Highlights this square either dark or light yellow depending on if it's black or white
-                    if (IsBlack)
+                    if (IsDark)
                     {
                         ChangeColour(Button, Color.Goldenrod);
                     }
@@ -304,7 +310,7 @@ namespace Chess
             }
 
             // Makes dark squares a darker red and light squares a lighter red
-            if (IsBlack)
+            if (IsDark)
             {
                 ChangeColour(Button, Color.Maroon);
             }
@@ -338,6 +344,9 @@ namespace Chess
             square.CurrentPiece.CurrentBoardSquare = this;
             square.CurrentPiece.IsSelected = false;
             square.CurrentPiece = null;
+
+            Button.Image = square.Button.Image;
+            square.Button.Image = null;
 
             ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
         }
@@ -698,19 +707,47 @@ namespace Chess
                 direction = -1;
             }
 
+            // Checks one space in front of the pawn
             var r = row + direction;
-            var square = board[r, column];
-            
-            if (square.CurrentPiece == null)
+            if (r >= 0 && r < board.GetLength(0))
             {
-                moves.Add(square);
-                if (firstTurn)
+                var square = board[r, column];
+                if (square.CurrentPiece == null)
                 {
-                    r += direction;
-                    square = board[r, column];
-                    if (square.CurrentPiece == null)
+                    moves.Add(square);
+
+                    // Allow the pawn to move two squares on its first turn
+                    if (firstTurn)
                     {
-                        moves.Add(square);
+                        r += direction;
+                        square = board[r, column];
+                        if (square.CurrentPiece == null)
+                        {
+                            moves.Add(square);
+                        }
+                    }
+                }
+            }
+
+            // Check diagonal spaces to see if they have enemy pieces, if they do, make them a legal move
+            r = row + direction;
+            if (r >= 0 && r < board.GetLength(0))
+            {
+                if (column + 1 < board.GetLength(1))
+                {
+                    var diagonalSquare = board[r, column + 1];
+                    if (diagonalSquare.CurrentPiece != null && diagonalSquare.CurrentPiece.IsBlack != IsBlack)
+                    {
+                        moves.Add(diagonalSquare);
+                    }
+                }
+
+                if (column - 1 >= 0)
+                {
+                    var diagonalSquare = board[r, column - 1];
+                    if (diagonalSquare.CurrentPiece != null && diagonalSquare.CurrentPiece.IsBlack != IsBlack)
+                    {
+                        moves.Add(diagonalSquare);
                     }
                 }
             }
@@ -766,8 +803,6 @@ namespace Chess
             // Goes out two spaces away from the knight
             if (r >= 0 && r < board.GetLength(0) && c >= 0 && c < board.GetLength(1))
             {
-                var square = board[r, c];
-
                 // Check for spaces above and below
                 if (rowDir == 0) { 
                     if (r + 1 < board.GetLength(0))
