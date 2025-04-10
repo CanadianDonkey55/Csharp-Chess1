@@ -45,6 +45,27 @@ namespace Chess
         }
     }
 
+    public class PawnPromoteScreen
+    {
+        public ChessBoard ChessBoard { get; set; }
+        public Panel panel;
+
+        public PawnPromoteScreen(ChessBoard chessBoard)
+        {
+            ChessBoard = chessBoard;
+            panel = new Panel();
+            DisplayPanel();
+        }
+
+        private void DisplayPanel()
+        {
+            BoardSquare square = ChessBoard.Squares[0, 0];
+            panel.BackColor = Color.White;
+            panel.Width = square.Button.Width;
+            panel.Height = square.Button.Height;
+        }
+    }
+
     public class ChessBoard
     {
         public BoardSquare[,] Squares { get; set; }
@@ -354,10 +375,12 @@ namespace Chess
             if (CurrentPiece is Pawn p && !p.IsBlack && Row == 0)
             {
                 CurrentPiece = new Queen(ChessBoard.Squares[Row, Column], p.IsBlack);
+                p.Promote();
             }
             else if (CurrentPiece is Pawn o && o.IsBlack && Row == 7)
             {
                 CurrentPiece = new Queen(ChessBoard.Squares[Row, Column], o.IsBlack);
+                o.Promote();
             }
             ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
         }
@@ -829,6 +852,11 @@ namespace Chess
                 }
             }
             return moves;
+        }
+
+        public void Promote()
+        {
+            new PawnPromoteScreen(CurrentBoardSquare.ChessBoard);
         }
     }
 
