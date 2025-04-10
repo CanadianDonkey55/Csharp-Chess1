@@ -24,7 +24,7 @@
     <None Update="Resources\BlackPieces\BlackRook.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\BlackPieces\DarkKnight.png">
+    <None Update="Resources\BlackPieces\BlackKnight.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Resources\WhitePieces\WhiteBishop.png">

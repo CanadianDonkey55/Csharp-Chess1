@@ -48,29 +48,116 @@ namespace Chess
     public class PawnPromoteScreen
     {
         public ChessBoard ChessBoard { get; set; }
+        public BoardSquare CurrentBoardSquare { get; set; }
+        public bool IsBlack { get; set; }
         public Panel panel;
+        private String pieceColour;
 
-        public PawnPromoteScreen(ChessBoard chessBoard)
+        public PawnPromoteScreen(ChessBoard chessBoard, BoardSquare currentBoardSquare)
         {
             ChessBoard = chessBoard;
             panel = new Panel();
+            if (IsBlack)
+            {
+                pieceColour = "Black";
+            }
+            else
+            {
+                pieceColour = "White";
+            }
             DisplayPanel();
+            CurrentBoardSquare = currentBoardSquare;
         }
 
         private void DisplayPanel()
         {
+            Image knightImage = Image.FromFile(@"Resources\" + pieceColour + @"Pieces\" + pieceColour + "Knight.png");
+            Image queenImage = Image.FromFile(@"Resources\" + pieceColour + @"Pieces\" + pieceColour + "Queen.png");
+            Image rookImage = Image.FromFile(@"Resources\" + pieceColour + @"Pieces\" + pieceColour + "Rook.png");
+            Image bishopImage = Image.FromFile(@"Resources\" + pieceColour + @"Pieces\" + pieceColour + "Bishop.png");
+
+            knightImage = new Bitmap(knightImage, ChessBoard.Squares[0, 0].Button.Width, ChessBoard.Squares[0, 0].Button.Height);
+            queenImage = new Bitmap(queenImage, ChessBoard.Squares[0, 0].Button.Width, ChessBoard.Squares[0, 0].Button.Height);
+            rookImage = new Bitmap(rookImage, ChessBoard.Squares[0, 0].Button.Width, ChessBoard.Squares[0, 0].Button.Height);
+            bishopImage = new Bitmap(bishopImage, ChessBoard.Squares[0, 0].Button.Width, ChessBoard.Squares[0, 0].Button.Height);
+
+            // Create the buttons
+            Button queenButton = new()
+            {
+                Location = new Point(0, 0),
+                Image = queenImage,
+                ImageAlign = ContentAlignment.MiddleCenter,
+                Size = queenImage.Size
+            };
+            Button rookButton = new()
+            {
+                Location = new Point(queenButton.Width, 0),
+                Image = rookImage,
+                ImageAlign = ContentAlignment.MiddleCenter,
+                Size = queenImage.Size
+            };
+            Button bishopButton = new()
+            {
+                Location = new Point(rookButton.Width * 2, 0),
+                Image = bishopImage,
+                ImageAlign = ContentAlignment.MiddleCenter,
+                Size = queenImage.Size
+            };
+            Button knightButton = new()
+            {
+                Location = new Point(bishopButton.Width * 3, 0),
+                Image = knightImage,
+                ImageAlign = ContentAlignment.MiddleCenter,
+                Size = queenImage.Size
+            };
+
             BoardSquare square = ChessBoard.Squares[0, 0];
             panel.BackColor = Color.White;
-            panel.Width = square.Button.Width;
+            panel.Width = square.Button.Width * 4;
             panel.Height = square.Button.Height;
+
+            panel.Controls.Add(queenButton);
+            panel.Controls.Add(rookButton);
+            panel.Controls.Add(bishopButton);
+            panel.Controls.Add(knightButton);
+
+            queenButton.MouseDown += (sender, e) => PieceButton("queen");
+            rookButton.MouseDown += (sender, e) => PieceButton("rook");
+            knightButton.MouseDown += (sender, e) => PieceButton("knight");
+            bishopButton.MouseDown += (sender, e) => PieceButton("bishop");
+        }
+
+        public void PieceButton(String pieceType)
+        {
+            switch (pieceType.ToLower())
+            {
+                case "queen":
+                    CurrentBoardSquare.CurrentPiece = new Queen(CurrentBoardSquare, IsBlack);
+                    break;
+                case "rook":
+                    CurrentBoardSquare.CurrentPiece = new Rook(CurrentBoardSquare, IsBlack);
+                    break;
+                case "bishop":
+                    CurrentBoardSquare.CurrentPiece = new Bishop(CurrentBoardSquare, IsBlack);
+                    break;
+                case "knight":
+                    CurrentBoardSquare.CurrentPiece = new Knight(CurrentBoardSquare, IsBlack);
+                    break;
+            }
+
+            CurrentBoardSquare.Button.Image = CurrentBoardSquare.CurrentPiece.PieceImage;
+            panel.Parent.Controls.Remove(panel);
+            ChessBoard.Promoting = false;
+            ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
         }
     }
 
     public class ChessBoard
     {
+        public bool Promoting { get; set; } = false;
         public BoardSquare[,] Squares { get; set; }
 
-        private TableLayoutPanel ChessBoardTable { get; }
+        public TableLayoutPanel ChessBoardTable { get; }
         public bool IsWhiteTurn { get; set; } = true;
 
         // Contructor
@@ -255,69 +342,73 @@ namespace Chess
             // Calls the method to reset the colour of every square on the board back to either black or white
             ChessBoard.ResetAllSquareColours();
 
-            // Goes through every square on the board and checks to find the one that is currently seleced
-            // If it finds one, it gets all the legal moves of the piece on that square and sees if the currently selected square is one of that pieces legal moves
-            // If it is, that piece is moved to this square and the method is returned
-            // If no piece that is selected is found, the method continues
-            foreach (var square in ChessBoard.Squares)
+            // Only do everything else if there is no pawn promoting
+            if (!ChessBoard.Promoting)
             {
-                if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
+                // Goes through every square on the board and checks to find the one that is currently seleced
+                // If it finds one, it gets all the legal moves of the piece on that square and sees if the currently selected square is one of that pieces legal moves
+                // If it is, that piece is moved to this square and the method is returned
+                // If no piece that is selected is found, the method continues
+                foreach (var square in ChessBoard.Squares)
                 {
-                    var legalMoves = square.CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
-                    if (legalMoves.Contains(this))
+                    if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
                     {
-                        Move(square);
-                        return;
-                    }
-                }
-            }
-            
-            // If the clicked square is not empty (ie, has a piece on it)
-            if (CurrentPiece != null)
-            {
-                // If the currently seleccted piece is the same colour as the player turn
-                if (ChessBoard.IsWhiteTurn != CurrentPiece.IsBlack)
-                {
-                    // If it finds another piece on your team is already selected, unselect that piece
-                    foreach (var square in ChessBoard.Squares)
-                    {
-                        if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
+                        var legalMoves = square.CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
+                        if (legalMoves.Contains(this))
                         {
-                            square.CurrentPiece.IsSelected = false;
-                            break;
+                            Move(square);
+                            return;
                         }
                     }
-                    // Select this piece and create a list of squares that are legal for the selected piece to move to
-                    CurrentPiece.IsSelected = true;
-                    var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
+                }
 
-                    // Highlights legal squares in either dark green or light green depending on if that square is black or white
-                    foreach (var move in legalMoves)
+                // If the clicked square is not empty (ie, has a piece on it)
+                if (CurrentPiece != null)
+                {
+                    // If the currently seleccted piece is the same colour as the player turn
+                    if (ChessBoard.IsWhiteTurn != CurrentPiece.IsBlack)
                     {
-                        move.Button.BackColor = Color.Green;
-                        if (move.IsDark)
+                        // If it finds another piece on your team is already selected, unselect that piece
+                        foreach (var square in ChessBoard.Squares)
                         {
-                            move.ChangeColour(move.Button, Color.DarkGreen);
+                            if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
+                            {
+                                square.CurrentPiece.IsSelected = false;
+                                break;
+                            }
+                        }
+                        // Select this piece and create a list of squares that are legal for the selected piece to move to
+                        CurrentPiece.IsSelected = true;
+                        var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
+
+                        // Highlights legal squares in either dark green or light green depending on if that square is black or white
+                        foreach (var move in legalMoves)
+                        {
+                            move.Button.BackColor = Color.Green;
+                            if (move.IsDark)
+                            {
+                                move.ChangeColour(move.Button, Color.DarkGreen);
+                            }
+                            else
+                            {
+                                move.ChangeColour(move.Button, Color.LightGreen);
+                            }
+                        }
+
+                        // Highlights this square either dark or light yellow depending on if it's black or white
+                        if (IsDark)
+                        {
+                            ChangeColour(Button, Color.Goldenrod);
                         }
                         else
                         {
-                            move.ChangeColour(move.Button, Color.LightGreen);
+                            ChangeColour(Button, Color.Gold);
                         }
+
+                        return;
                     }
 
-                    // Highlights this square either dark or light yellow depending on if it's black or white
-                    if (IsDark)
-                    {
-                        ChangeColour(Button, Color.Goldenrod);
-                    }
-                    else
-                    {
-                        ChangeColour(Button, Color.Gold);
-                    }
-
-                    return;
                 }
-
             }
         }
 
@@ -374,15 +465,17 @@ namespace Chess
             // If the current piece is a pawn and it's at the end of the board, allow it to promote
             if (CurrentPiece is Pawn p && !p.IsBlack && Row == 0)
             {
-                CurrentPiece = new Queen(ChessBoard.Squares[Row, Column], p.IsBlack);
                 p.Promote();
             }
             else if (CurrentPiece is Pawn o && o.IsBlack && Row == 7)
             {
-                CurrentPiece = new Queen(ChessBoard.Squares[Row, Column], o.IsBlack);
                 o.Promote();
             }
-            ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
+
+            if (!ChessBoard.Promoting)
+            {
+                ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
+            }
         }
     }
 
@@ -856,7 +949,19 @@ namespace Chess
 
         public void Promote()
         {
-            new PawnPromoteScreen(CurrentBoardSquare.ChessBoard);
+            CurrentBoardSquare.ChessBoard.Promoting = true;
+
+            PawnPromoteScreen promoteScreen =  new PawnPromoteScreen(CurrentBoardSquare.ChessBoard, CurrentBoardSquare);
+            CurrentBoardSquare.ChessBoard.ChessBoardTable.Parent.Controls.Add(promoteScreen.panel);
+            if (IsBlack)
+            {
+                promoteScreen.IsBlack = true;
+            }
+            else
+            {
+                promoteScreen.IsBlack = false;
+            }
+            promoteScreen.panel.Location = new Point(CurrentBoardSquare.Button.Location.X, CurrentBoardSquare.Button.Location.Y);
         }
     }
 
@@ -866,7 +971,7 @@ namespace Chess
         {
             if (IsBlack)
             {
-                PieceImage = Image.FromFile(@"Resources\BlackPieces\DarkKnight.png");
+                PieceImage = Image.FromFile(@"Resources\BlackPieces\BlackKnight.png");
             }
             else
             {
