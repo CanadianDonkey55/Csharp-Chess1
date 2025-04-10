@@ -242,7 +242,7 @@ namespace Chess
             {
                 if (square.CurrentPiece != null && square.CurrentPiece.IsSelected)
                 {
-                    var legalMoves = square.CurrentPiece.GetLegalMoves(ChessBoard.Squares);
+                    var legalMoves = square.CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
                     if (legalMoves.Contains(this))
                     {
                         Move(square);
@@ -268,7 +268,7 @@ namespace Chess
                     }
                     // Select this piece and create a list of squares that are legal for the selected piece to move to
                     CurrentPiece.IsSelected = true;
-                    var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
+                    var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
 
                     // Highlights legal squares in either dark green or light green depending on if that square is black or white
                     foreach (var move in legalMoves)
@@ -348,15 +348,17 @@ namespace Chess
             Button.Image = square.Button.Image;
             square.Button.Image = null;
 
-            var legalMoves = CurrentPiece.GetLegalMoves(ChessBoard.Squares);
-            foreach (var legalMove in legalMoves)
-            {
-                if (legalMove.CurrentPiece is King king)
-                {
-                    king.InCheck = true;
-                }
-            }
 
+
+            // If the current piece is a pawn and it's at the end of the board, allow it to promote
+            if (CurrentPiece is Pawn p && !p.IsBlack && Row == 0)
+            {
+                CurrentPiece = new Queen(ChessBoard.Squares[Row, Column], p.IsBlack);
+            }
+            else if (CurrentPiece is Pawn o && o.IsBlack && Row == 7)
+            {
+                CurrentPiece = new Queen(ChessBoard.Squares[Row, Column], o.IsBlack);
+            }
             ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
         }
     }
@@ -381,10 +383,75 @@ namespace Chess
 
         // A list of legal moves for each piece
         public abstract List<BoardSquare> GetLegalMoves(BoardSquare[,] board);
+
+        // Check each legal move to see if the king is still in check
+        public List<BoardSquare> InCheckLegalMoves(BoardSquare[,] board)
+        {
+            var validMoves = new List<BoardSquare>();
+            var legalMoves = GetLegalMoves(board);
+
+            foreach (var move in legalMoves)
+            {
+                // Save the current state
+                var originalSquare = CurrentBoardSquare;
+                var originalPieceOnTarget = move.CurrentPiece;
+
+                // Simulate the move
+                move.CurrentPiece = this;
+                CurrentBoardSquare.CurrentPiece = null;
+                CurrentBoardSquare = move;
+
+                // Check if the king is in check
+                if (!KingInCheck())
+                {
+                    validMoves.Add(move);
+                }
+
+                // Revert the move
+                CurrentBoardSquare = originalSquare;
+                originalSquare.CurrentPiece = this;
+                move.CurrentPiece = originalPieceOnTarget;
+            }
+
+            return validMoves;
+        }
+
+
+        public bool KingInCheck()
+        {
+            // Find the king's position
+            BoardSquare kingSquare = null;
+            foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
+            {
+                if (square.CurrentPiece is King king && king.IsBlack == this.IsBlack)
+                {
+                    kingSquare = square;
+                    break;
+                }
+            }
+
+            // Check if any opposing piece can attack the king
+            foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
+            {
+                if (square.CurrentPiece != null && square.CurrentPiece.IsBlack != this.IsBlack)
+                {
+                    var opponentMoves = square.CurrentPiece.GetLegalMoves(CurrentBoardSquare.ChessBoard.Squares);
+                    if (opponentMoves.Contains(kingSquare))
+                    {
+                        return true; // King is in check
+                    }
+                }
+            }
+
+            return false; // King is not in check
+        }
+
     }
 
     public class Rook : Piece
     {
+        public bool hasMoved { get; set; } = false;
+
         public Rook(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
             // Makes the image either the black or white version of this piece (applies to all pieces)
@@ -601,7 +668,7 @@ namespace Chess
 
     public class King : Piece
     {
-        public bool InCheck {  get; set; } = false;
+        public bool hasMoved { get; set; } = false;
 
         public King(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
