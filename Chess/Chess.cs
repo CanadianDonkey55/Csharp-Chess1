@@ -1,11 +1,12 @@
 using System;
+using System.ComponentModel;
 
 namespace Chess
 {
-    public partial class Form1 : Form
+    public partial class Chess : Form
     {
         ChessBoard ChessBoard;
-        public Form1()
+        public Chess()
         {
             InitializeComponent();
             ChessBoard = new ChessBoard(chessBoard);
@@ -38,10 +39,10 @@ namespace Chess
             var chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
 
-            //foreach (var square in ChessBoard.Squares)
-            //{
-            //    square.CurrentPiece.PieceImage = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
-            //}
+            foreach (var square in ChessBoard.Squares)
+            {
+                square.CurrentPiece.PieceImage = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
+            }
         }
     }
 
@@ -53,10 +54,12 @@ namespace Chess
         public Panel panel;
         private String pieceColour;
 
-        public PawnPromoteScreen(ChessBoard chessBoard, BoardSquare currentBoardSquare)
+        public PawnPromoteScreen(ChessBoard chessBoard, BoardSquare currentBoardSquare, bool isBlack)
         {
             ChessBoard = chessBoard;
+            IsBlack = isBlack;
             panel = new Panel();
+
             if (IsBlack)
             {
                 pieceColour = "Black";
@@ -183,20 +186,20 @@ namespace Chess
 
             Squares = new BoardSquare[rows, columns];
 
-            bool colInt = false;
+            bool isDark = false;
 
-            for (int r = 0; r < rows; r++)
+            for (int row = 0; row < rows; row++)
             {
-                for (int c = 0; c < columns; c++)
+                for (int column = 0; column < columns; column++)
                 {
-                    var square = new BoardSquare(r, c, colInt);
-                    Squares[r, c] = square;
+                    var square = new BoardSquare(row, column, isDark);
+                    Squares[row, column] = square;
                     square.ChessBoard = this;
 
-                    ChessBoardTable.Controls.Add(square.Button, c, r);
-                    colInt = !colInt;
+                    ChessBoardTable.Controls.Add(square.Button, column, row);
+                    isDark = !isDark;
                 }
-                colInt = !colInt;
+                isDark = !isDark;
             }
         }
 
@@ -255,16 +258,17 @@ namespace Chess
         // Resets the colour of every square
         public void ResetAllSquareColours()
         {
-            for (var r = 0; r < Squares.GetLength(0); r++)
+            for (var row = 0; row < Squares.GetLength(0); row++)
             {
-                for (var c = 0; c < Squares.GetLength(1); c++)
+                for (var column = 0; column < Squares.GetLength(1); column++)
                 {
-                    Squares[r, c].ResetColour();
+                    Squares[row, column].ResetColour();
                 }
             }
         }
     }
-         
+
+    [ToolboxItem(true)]
     public class BoardSquare
     {
         public ChessBoard ChessBoard {  get; set; }
@@ -272,7 +276,7 @@ namespace Chess
         public int Column { get; set; }
         private bool IsDark { get; set; }
         public Button Button { get; set; }
-        public Piece CurrentPiece { get; set; }
+        public Piece? CurrentPiece { get; set; }
 
         public BoardSquare(int row, int column, bool colour)
         {
@@ -463,13 +467,13 @@ namespace Chess
 
 
             // If the current piece is a pawn and it's at the end of the board, allow it to promote
-            if (CurrentPiece is Pawn p && !p.IsBlack && Row == 0)
+            if (CurrentPiece is Pawn whitePawn && !whitePawn.IsBlack && Row == 0)
             {
-                p.Promote();
+                whitePawn.Promote();
             }
-            else if (CurrentPiece is Pawn o && o.IsBlack && Row == 7)
+            else if (CurrentPiece is Pawn blackPawn && blackPawn.IsBlack && Row == 7)
             {
-                o.Promote();
+                blackPawn.Promote();
             }
 
             if (!ChessBoard.Promoting)
@@ -535,8 +539,8 @@ namespace Chess
 
         public bool KingInCheck()
         {
-            // Find the king's position
-            BoardSquare kingSquare = null;
+            // Find the king's position  
+            BoardSquare? kingSquare = null;
             foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
             {
                 if (square.CurrentPiece is King king && king.IsBlack == this.IsBlack)
@@ -546,7 +550,13 @@ namespace Chess
                 }
             }
 
-            // Check if any opposing piece can attack the king
+            // Ensure kingSquare is not null before proceeding  
+            if (kingSquare == null)
+            {
+                return false; // If no king is found, assume not in check  
+            }
+
+            // Check if any opposing piece can attack the king  
             foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
             {
                 if (square.CurrentPiece != null && square.CurrentPiece.IsBlack != this.IsBlack)
@@ -554,12 +564,12 @@ namespace Chess
                     var opponentMoves = square.CurrentPiece.GetLegalMoves(CurrentBoardSquare.ChessBoard.Squares);
                     if (opponentMoves.Contains(kingSquare))
                     {
-                        return true; // King is in check
+                        return true; // King is in check  
                     }
                 }
             }
 
-            return false; // King is not in check
+            return false; // King is not in check  
         }
 
     }
@@ -947,11 +957,12 @@ namespace Chess
             return moves;
         }
 
+        // Creates a new promote screen near the pawn that is promoting
         public void Promote()
         {
             CurrentBoardSquare.ChessBoard.Promoting = true;
 
-            PawnPromoteScreen promoteScreen =  new PawnPromoteScreen(CurrentBoardSquare.ChessBoard, CurrentBoardSquare);
+            PawnPromoteScreen promoteScreen =  new PawnPromoteScreen(CurrentBoardSquare.ChessBoard, CurrentBoardSquare, IsBlack);
             CurrentBoardSquare.ChessBoard.ChessBoardTable.Parent.Controls.Add(promoteScreen.panel);
             if (IsBlack)
             {
