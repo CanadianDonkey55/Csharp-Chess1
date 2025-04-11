@@ -39,10 +39,10 @@ namespace Chess
             var chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
 
-            foreach (var square in ChessBoard.Squares)
-            {
-                square.CurrentPiece.PieceImage = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
-            }
+            //foreach (var square in ChessBoard.Squares)
+            //{
+            //    square.CurrentPiece.PieceImage = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
+            //}
         }
     }
 
@@ -465,6 +465,21 @@ namespace Chess
             square.Button.Image = null;
 
 
+            // Check if the team king is in check
+            var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
+            foreach (var move in legalMoves)
+            {
+                if (move.CurrentPiece == CurrentPiece.GetEnemyKing())
+                {
+                    CurrentPiece.GetEnemyKing().InCheck = true;
+                    MessageBox.Show("King in check");
+                }
+                else
+                {
+                    CurrentPiece.GetEnemyKing().InCheck = false;
+                    MessageBox.Show("King not in check");
+                }
+            }
 
             // If the current piece is a pawn and it's at the end of the board, allow it to promote
             if (CurrentPiece is Pawn whitePawn && !whitePawn.IsBlack && Row == 0)
@@ -533,6 +548,17 @@ namespace Chess
                 move.CurrentPiece = originalPieceOnTarget;
             }
 
+            //if (this is King currentKing && validMoves.Count == 0)
+            //{
+            //    currentKing.InCheck = true;
+            //    MessageBox.Show("King in check");
+            //}
+            //else if (this is King currentKingNotInCheck)
+            //{
+            //    currentKingNotInCheck.InCheck = false;
+            //    MessageBox.Show("King not in check");
+            //}
+
             return validMoves;
         }
 
@@ -572,6 +598,31 @@ namespace Chess
             return false; // King is not in check  
         }
 
+        public King GetTeamKing()
+        {
+            foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
+            {
+                if (square.CurrentPiece is King king && king.IsBlack == this.IsBlack)
+                {
+                    return king;
+                }
+            }
+
+            return null;
+        }
+
+        public King GetEnemyKing()
+        {
+            foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
+            {
+                if (square.CurrentPiece is King king && king.InCheck != this.IsBlack)
+                {
+                    return king;
+                }
+            }
+
+            return null;
+        }
     }
 
     public class Rook : Piece
@@ -794,7 +845,8 @@ namespace Chess
 
     public class King : Piece
     {
-        public bool hasMoved { get; set; } = false;
+        public bool HasMoved { get; set; } = false;
+        public bool InCheck { get; set; } = false;
 
         public King(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
         {
