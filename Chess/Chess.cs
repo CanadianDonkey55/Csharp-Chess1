@@ -132,6 +132,7 @@ namespace Chess
 
         public void PieceButton(String pieceType)
         {
+            CurrentBoardSquare.CurrentPiece = null;
             switch (pieceType.ToLower())
             {
                 case "queen":
@@ -149,6 +150,7 @@ namespace Chess
             }
 
             CurrentBoardSquare.Button.Image = CurrentBoardSquare.CurrentPiece.PieceImage;
+            CurrentBoardSquare.CurrentPiece.CurrentBoardSquare = CurrentBoardSquare;
             panel.Parent.Controls.Remove(panel);
             ChessBoard.Promoting = false;
             ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
@@ -616,7 +618,6 @@ namespace Chess
                     }
                 }
             }
-
             return false; // King is not in check  
         }
 
@@ -629,7 +630,6 @@ namespace Chess
                     return king;
                 }
             }
-
             return null;
         }
 
@@ -642,7 +642,6 @@ namespace Chess
                     return king;
                 }
             }
-
             return null;
         }
     }
@@ -928,6 +927,17 @@ namespace Chess
                 }
             }
             return moves;
+        }
+
+        public void Castle()
+        {
+            foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
+            {
+                if (square.CurrentPiece is Rook rook && rook.IsBlack == this.IsBlack)
+                {
+
+                }
+            }
         }
     }
 
