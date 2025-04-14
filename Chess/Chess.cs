@@ -464,23 +464,6 @@ namespace Chess
             Button.Image = square.Button.Image;
             square.Button.Image = null;
 
-
-            // Check if the team king is in check
-            var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
-            foreach (var move in legalMoves)
-            {
-                if (move.CurrentPiece == CurrentPiece.GetEnemyKing())
-                {
-                    CurrentPiece.GetEnemyKing().InCheck = true;
-                    MessageBox.Show("King in check");
-                }
-                else
-                {
-                    CurrentPiece.GetEnemyKing().InCheck = false;
-                    MessageBox.Show("King not in check");
-                }
-            }
-
             // If the current piece is a pawn and it's at the end of the board, allow it to promote
             if (CurrentPiece is Pawn whitePawn && !whitePawn.IsBlack && Row == 0)
             {
@@ -489,6 +472,45 @@ namespace Chess
             else if (CurrentPiece is Pawn blackPawn && blackPawn.IsBlack && Row == 7)
             {
                 blackPawn.Promote();
+            }
+
+            // Check if the team king is in check
+            var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
+            foreach (var move in legalMoves)
+            {
+                if (move.CurrentPiece == CurrentPiece.GetEnemyKing())
+                {
+                    CurrentPiece.GetEnemyKing().InCheck = true;
+                    break;
+                }
+                else 
+                { 
+                    CurrentPiece.GetEnemyKing().InCheck = false; 
+                }
+            }
+
+            // Check for checkmate
+            if (CurrentPiece.GetEnemyKing().InCheck && CurrentPiece.GetEnemyKing().InCheckLegalMoves(ChessBoard.Squares).Count <= 0)
+            {
+                bool checkmate = false;
+
+                foreach (var space in ChessBoard.Squares)
+                {
+                    if (space.CurrentPiece != null && space.CurrentPiece.IsBlack != CurrentPiece.IsBlack && space.CurrentPiece.InCheckLegalMoves(ChessBoard.Squares).Count <= 0)
+                    {
+                        checkmate = true;
+                    }
+                    else if (space.CurrentPiece != null && space.CurrentPiece.IsBlack != CurrentPiece.IsBlack)
+                    {
+                        checkmate = false;
+                        break;
+                    }
+                }
+
+                if (checkmate)
+                {
+                    MessageBox.Show("Checkmate");
+                }
             }
 
             if (!ChessBoard.Promoting)
@@ -615,7 +637,7 @@ namespace Chess
         {
             foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
             {
-                if (square.CurrentPiece is King king && king.InCheck != this.IsBlack)
+                if (square.CurrentPiece is King king && king.IsBlack != this.IsBlack)
                 {
                     return king;
                 }
