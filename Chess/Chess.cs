@@ -476,6 +476,11 @@ namespace Chess
                 blackPawn.Promote();
             }
 
+            if (CurrentPiece is Rook rook && !rook.hasMoved)
+            {
+                rook.hasMoved = true;
+            }
+
             // Check if the team king is in check
             var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
             foreach (var move in legalMoves)
@@ -933,7 +938,7 @@ namespace Chess
         {
             foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
             {
-                if (square.CurrentPiece is Rook rook && rook.IsBlack == this.IsBlack)
+                if (square.CurrentPiece is Rook rook && rook.IsBlack == this.IsBlack && !rook.hasMoved)
                 {
 
                 }
