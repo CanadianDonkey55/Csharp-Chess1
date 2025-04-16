@@ -139,7 +139,7 @@ namespace Chess
                     CurrentBoardSquare.CurrentPiece = new Queen(CurrentBoardSquare, IsBlack);
                     break;
                 case "rook":
-                    CurrentBoardSquare.CurrentPiece = new Rook(CurrentBoardSquare, IsBlack);
+                    CurrentBoardSquare.CurrentPiece = new Rook(CurrentBoardSquare, IsBlack, null);
                     break;
                 case "bishop":
                     CurrentBoardSquare.CurrentPiece = new Bishop(CurrentBoardSquare, IsBlack);
@@ -211,10 +211,10 @@ namespace Chess
             // The bool is if the piece is black or white (true = white, false = black)
 
             // Rooks
-            new Rook(Squares[0, 0], true);
-            new Rook(Squares[0, 7], true);
-            new Rook(Squares[7, 0], false);
-            new Rook(Squares[7, 7], false);
+            new Rook(Squares[0, 0], true, false);
+            new Rook(Squares[0, 7], true, true);
+            new Rook(Squares[7, 0], false, false);
+            new Rook(Squares[7, 7], false, true);
 
             // Bishops
             new Bishop(Squares[0, 2], true);
@@ -273,12 +273,13 @@ namespace Chess
     [ToolboxItem(true)]
     public class BoardSquare
     {
-        public ChessBoard ChessBoard {  get; set; }
-        public int Row {  get; set; }
+        public ChessBoard ChessBoard { get; set; }
+        public int Row { get; set; }
         public int Column { get; set; }
         private bool IsDark { get; set; }
         public Button Button { get; set; }
         public Piece? CurrentPiece { get; set; }
+        public bool IsCastleableSquare { get; set; } = false;
 
         public BoardSquare(int row, int column, bool colour)
         {
@@ -448,24 +449,41 @@ namespace Chess
             
             // If the current space is not null, (if there is an enemy piece here) make it null
             if (CurrentPiece != null)
-                
             {
                 CurrentPiece = null;
             }
 
+            MovePieces(square, this);
+            PawnPromotion(square);
+            CheckForCheck(square);
+            Checkmate(square);
+            Castling(square);
+
+            // Changes the turn
+            if (!ChessBoard.Promoting)
+            {
+                ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
+            }
+        }
+
+        private void MovePieces(BoardSquare originalSquare, BoardSquare newSquare)
+        {
             // The current piece is the same as the piece on the old square
             // The piece on the old square is now on this square
             // The piece is no longer selected
             // The square's current piece is now null
-            // Changes the turn
-            CurrentPiece = square.CurrentPiece;
-            square.CurrentPiece.CurrentBoardSquare = this;
-            square.CurrentPiece.IsSelected = false;
-            square.CurrentPiece = null;
+            newSquare.CurrentPiece = originalSquare.CurrentPiece;
+            originalSquare.CurrentPiece.CurrentBoardSquare = newSquare;
+            originalSquare.CurrentPiece.IsSelected = false;
+            originalSquare.CurrentPiece = null;
 
-            Button.Image = square.Button.Image;
-            square.Button.Image = null;
+            // Swap the new piece spot's image with the original piece spot's image
+            newSquare.Button.Image = originalSquare.Button.Image;
+            originalSquare.Button.Image = null;
+        }
 
+        private void PawnPromotion(BoardSquare square)
+        {
             // If the current piece is a pawn and it's at the end of the board, allow it to promote
             if (CurrentPiece is Pawn whitePawn && !whitePawn.IsBlack && Row == 0)
             {
@@ -475,12 +493,10 @@ namespace Chess
             {
                 blackPawn.Promote();
             }
+        }
 
-            if (CurrentPiece is Rook rook && !rook.hasMoved)
-            {
-                rook.hasMoved = true;
-            }
-
+        private void CheckForCheck(BoardSquare square)
+        {
             // Check if the team king is in check
             var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
             foreach (var move in legalMoves)
@@ -490,12 +506,15 @@ namespace Chess
                     CurrentPiece.GetEnemyKing().InCheck = true;
                     break;
                 }
-                else 
-                { 
-                    CurrentPiece.GetEnemyKing().InCheck = false; 
+                else
+                {
+                    CurrentPiece.GetEnemyKing().InCheck = false;
                 }
             }
+        }
 
+        private void Checkmate(BoardSquare square)
+        {
             // Check for checkmate
             if (CurrentPiece.GetEnemyKing().InCheck && CurrentPiece.GetEnemyKing().InCheckLegalMoves(ChessBoard.Squares).Count <= 0)
             {
@@ -519,10 +538,33 @@ namespace Chess
                     MessageBox.Show("Checkmate");
                 }
             }
+        }
 
-            if (!ChessBoard.Promoting)
+        private void Castling(BoardSquare square)
+        {
+            // Swap pieces when castling
+            if (IsCastleableSquare)
             {
-                ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
+                if (Column == 2)
+                {
+                    MovePieces(ChessBoard.Squares[Row, 0], ChessBoard.Squares[Row, 3]);
+                    IsCastleableSquare = false;
+                }
+                else if (Column == 6)
+                {
+                    MovePieces(ChessBoard.Squares[Row, 7], ChessBoard.Squares[Row, 5]);
+                    IsCastleableSquare = false;
+                }
+            }
+
+            // If the current piece is a king or rook, set the HasMoved variable to true
+            if (CurrentPiece is King king && !king.HasMoved)
+            {
+                king.HasMoved = true;
+            }
+            else if (CurrentPiece is Rook rook && !rook.HasMoved)
+            {
+                rook.HasMoved = true;
             }
         }
     }
@@ -653,9 +695,10 @@ namespace Chess
 
     public class Rook : Piece
     {
-        public bool hasMoved { get; set; } = false;
+        public bool HasMoved { get; set; } = false;
+        public bool? OnRight { get; }
 
-        public Rook(BoardSquare startSquare, bool isBlack) : base(startSquare, isBlack)
+        public Rook(BoardSquare startSquare, bool isBlack, bool? onRight) : base(startSquare, isBlack)
         {
             // Makes the image either the black or white version of this piece (applies to all pieces)
             if (IsBlack)
@@ -675,6 +718,8 @@ namespace Chess
                 CurrentBoardSquare.Button.Image = PieceImage;
                 CurrentBoardSquare.Button.ImageAlign = ContentAlignment.MiddleCenter;
             }
+
+            OnRight = onRight;
         }
 
         public override List<BoardSquare> GetLegalMoves(BoardSquare[,] board)
@@ -931,18 +976,37 @@ namespace Chess
                     moves.Add(square);
                 }
             }
+            // Check for legal castling moves and add them to the list of legal moves
+            moves.AddRange(Castle(moves, board));
+
             return moves;
         }
 
-        public void Castle()
+        private List<BoardSquare> Castle(List<BoardSquare> moves, BoardSquare[,] board)
         {
+            // Searches every square on the board for a rook that is the same colour and has not moved
             foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
             {
-                if (square.CurrentPiece is Rook rook && rook.IsBlack == this.IsBlack && !rook.hasMoved)
+                if (square.CurrentPiece is Rook rook && rook.IsBlack == this.IsBlack && !rook.HasMoved && !HasMoved)
                 {
-
+                    // If the rook is on the right side of the board, check if the squares between the king and rook are empty
+                    if (rook.OnRight == true && board[square.Row, square.Column - 1].CurrentPiece == null
+                        && board[square.Row, square.Column - 2].CurrentPiece == null)
+                    {
+                        moves.Add(board[square.Row, square.Column - 1]);
+                        board[square.Row, square.Column - 1].IsCastleableSquare = true;
+                    }
+                    // If the rook is on the left side of the board, check if the squares between the king and rook are empty
+                    else if (rook.OnRight == false && board[square.Row, square.Column + 1].CurrentPiece == null 
+                        && board[square.Row, square.Column + 2].CurrentPiece == null
+                        && board[square.Row, square.Column + 3].CurrentPiece == null)
+                    {
+                        moves.Add(board[square.Row, square.Column + 2]);
+                        board[square.Row, square.Column + 2].IsCastleableSquare = true;
+                    }
                 }
             }
+            return moves;
         }
     }
 
