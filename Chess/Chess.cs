@@ -10,6 +10,7 @@ namespace Chess
         {
             InitializeComponent();
             ChessBoard = new ChessBoard(chessBoard);
+            newGameButton.ForeColor = Color.White;
         }
 
         private void Form1_Resize(object sender, System.EventArgs e)
@@ -43,6 +44,18 @@ namespace Chess
             //{
             //    square.CurrentPiece.PieceImage = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
             //}
+        }
+
+        private void newGameButton_Click(object sender, EventArgs e)
+        {
+            foreach (var square in ChessBoard.Squares)
+            {
+                square.CurrentPiece = null;
+                square.Button.Image = null;
+                ChessBoard.IsWhiteTurn = true;
+            }
+            ChessBoard.GenerateStartingPieces();
+            ChessBoard.ResetAllSquareColours();
         }
     }
 
@@ -161,8 +174,8 @@ namespace Chess
     {
         public bool Promoting { get; set; } = false;
         public BoardSquare[,] Squares { get; set; }
-
-        public TableLayoutPanel ChessBoardTable { get; }
+        public BoardSquare? PreviousMove { get; set; }
+        public TableLayoutPanel ChessBoardTable { get; set; }
         public bool IsWhiteTurn { get; set; } = true;
 
         // Contructor
@@ -205,12 +218,13 @@ namespace Chess
             }
         }
 
-        private void GenerateStartingPieces()
+        public void GenerateStartingPieces()
         {
             // The first value of the array is their row, the second is the column
             // The bool is if the piece is black or white (true = white, false = black)
 
             // Rooks
+            // The second bool is to show if the rook starts on the left (false) or right (true)
             new Rook(Squares[0, 0], true, false);
             new Rook(Squares[0, 7], true, true);
             new Rook(Squares[7, 0], false, false);
@@ -280,6 +294,7 @@ namespace Chess
         public Button Button { get; set; }
         public Piece? CurrentPiece { get; set; }
         public bool IsCastleableSquare { get; set; } = false;
+        public bool IsPawnDoubleSquare { get; set; } = false;
 
         public BoardSquare(int row, int column, bool colour)
         {
@@ -459,6 +474,10 @@ namespace Chess
             Checkmate(square);
             Castling(square);
 
+            // Keeps track of the previous move
+            ChessBoard.PreviousMove = null;
+            ChessBoard.PreviousMove = this;
+
             // Changes the turn
             if (!ChessBoard.Promoting)
             {
@@ -533,9 +552,17 @@ namespace Chess
                     }
                 }
 
+                // Shows a message displaying who won
                 if (checkmate)
                 {
-                    MessageBox.Show("Checkmate");
+                    if (ChessBoard.IsWhiteTurn)
+                    {
+                        MessageBox.Show("White wins!");
+                    }
+                    else
+                    {
+                        MessageBox.Show("Black wins!");
+                    }
                 }
             }
         }
@@ -1046,6 +1073,12 @@ namespace Chess
             // Add the position of this piece
             legalMoves.AddRange(Moves(board, row, column));
 
+            // If en passant is possible, add it as a legal move
+            if (EnPassantSquare(board) != null)
+            {
+                legalMoves.Add(EnPassantSquare(board));
+            }
+
             return legalMoves;
         }
 
@@ -1075,8 +1108,7 @@ namespace Chess
                     // Allow the pawn to move two squares on its first turn
                     if (firstTurn)
                     {
-                        r += direction;
-                        square = board[r, column];
+                        square = board[r + direction, column];
                         if (square.CurrentPiece == null)
                         {
                             moves.Add(square);
@@ -1094,6 +1126,7 @@ namespace Chess
                     var diagonalSquare = board[r, column + 1];
                     if (diagonalSquare.CurrentPiece != null && diagonalSquare.CurrentPiece.IsBlack != IsBlack)
                     {
+                        diagonalSquare.IsPawnDoubleSquare = true;
                         moves.Add(diagonalSquare);
                     }
                 }
@@ -1103,6 +1136,7 @@ namespace Chess
                     var diagonalSquare = board[r, column - 1];
                     if (diagonalSquare.CurrentPiece != null && diagonalSquare.CurrentPiece.IsBlack != IsBlack)
                     {
+                        diagonalSquare.IsPawnDoubleSquare = true;
                         moves.Add(diagonalSquare);
                     }
                 }
@@ -1115,7 +1149,7 @@ namespace Chess
         {
             CurrentBoardSquare.ChessBoard.Promoting = true;
 
-            PawnPromoteScreen promoteScreen =  new PawnPromoteScreen(CurrentBoardSquare.ChessBoard, CurrentBoardSquare, IsBlack);
+            PawnPromoteScreen promoteScreen =  new(CurrentBoardSquare.ChessBoard, CurrentBoardSquare, IsBlack);
             CurrentBoardSquare.ChessBoard.ChessBoardTable.Parent.Controls.Add(promoteScreen.panel);
             if (IsBlack)
             {
@@ -1126,6 +1160,45 @@ namespace Chess
                 promoteScreen.IsBlack = false;
             }
             promoteScreen.panel.Location = new Point(CurrentBoardSquare.Button.Location.X, CurrentBoardSquare.Button.Location.Y);
+        }
+
+        private BoardSquare? EnPassantSquare(BoardSquare[,] board)
+        {
+            if (CurrentBoardSquare.ChessBoard.PreviousMove == null)
+            {
+                return null;
+            }
+
+            if (CurrentBoardSquare.ChessBoard.PreviousMove.CurrentPiece is Pawn pawn && !pawn.firstTurn && pawn.IsBlack != IsBlack && CurrentBoardSquare.Row == pawn.CurrentBoardSquare.Row && 
+                (pawn.CurrentBoardSquare.Column == CurrentBoardSquare.Column + 1 || pawn.CurrentBoardSquare.Column == CurrentBoardSquare.Column - 1) && 
+                (pawn.CurrentBoardSquare.Row == 3 || pawn.CurrentBoardSquare.Row == 4))
+            {
+                int passDirection;
+                int moveDirection;
+                if (IsBlack)
+                {
+                    moveDirection = 1;
+                }
+                else
+                {
+                    moveDirection = -1;
+                }
+
+                if (pawn.CurrentBoardSquare.Column > CurrentBoardSquare.Column)
+                {
+                    passDirection = 1;
+                } 
+                else
+                {
+                    passDirection = -1;
+                }
+
+                    return board[CurrentBoardSquare.Row + moveDirection, CurrentBoardSquare.Column + passDirection];
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 

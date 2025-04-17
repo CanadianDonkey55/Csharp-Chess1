@@ -30,6 +30,7 @@
         {
             chessBoard = new TableLayoutPanel();
             label1 = new Label();
+            newGameButton = new Button();
             SuspendLayout();
             // 
             // chessBoard
@@ -62,19 +63,30 @@
             label1.AutoSize = true;
             label1.Location = new Point(1121, 24);
             label1.Name = "label1";
-            label1.Size = new Size(38, 15);
+            label1.Size = new Size(0, 15);
             label1.TabIndex = 1;
-            label1.Text = "label1";
             // 
-            // Form1
+            // newGameButton
+            // 
+            newGameButton.BackColor = Color.FromArgb(0, 64, 0);
+            newGameButton.Location = new Point(1073, 28);
+            newGameButton.Name = "newGameButton";
+            newGameButton.Size = new Size(121, 51);
+            newGameButton.TabIndex = 2;
+            newGameButton.Text = "New Game";
+            newGameButton.UseVisualStyleBackColor = false;
+            newGameButton.Click += newGameButton_Click;
+            // 
+            // Chess
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.WindowFrame;
             ClientSize = new Size(1336, 722);
+            Controls.Add(newGameButton);
             Controls.Add(label1);
             Controls.Add(chessBoard);
-            Name = "Form1";
+            Name = "Chess";
             Text = "Chess";
             WindowState = FormWindowState.Maximized;
             Resize += Form1_Resize;
@@ -86,5 +98,6 @@
 
         private TableLayoutPanel chessBoard;
         public Label label1;
+        private Button newGameButton;
     }
 }
