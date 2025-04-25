@@ -55,7 +55,7 @@ namespace Chess
                 ChessBoard.IsWhiteTurn = true;
             }
             ChessBoard.GenerateStartingPieces();
-            ChessBoard.ResetAllSquareColours();
+            ChessBoard.ResetAllSquares();
         }
     }
 
@@ -272,14 +272,13 @@ namespace Chess
         }
 
         // Resets the colour of every square
-        public void ResetAllSquareColours()
+        public void ResetAllSquares()
         {
-            for (var row = 0; row < Squares.GetLength(0); row++)
+            foreach (var square in Squares)
             {
-                for (var column = 0; column < Squares.GetLength(1); column++)
-                {
-                    Squares[row, column].ResetColour();
-                }
+                square.IsCastleableSquare = false;
+                square.IsEnPassantSquare = false;
+                square.ResetColour();
             }
         }
     }
@@ -294,7 +293,7 @@ namespace Chess
         public Button Button { get; set; }
         public Piece? CurrentPiece { get; set; }
         public bool IsCastleableSquare { get; set; } = false;
-        public bool IsPawnDoubleSquare { get; set; } = false;
+        public bool IsEnPassantSquare { get; set; } = false;
 
         public BoardSquare(int row, int column, bool colour)
         {
@@ -362,7 +361,7 @@ namespace Chess
         private void LeftClick()
         {
             // Calls the method to reset the colour of every square on the board back to either black or white
-            ChessBoard.ResetAllSquareColours();
+            ChessBoard.ResetAllSquares();
 
             // Only do everything else if there is no pawn promoting
             if (!ChessBoard.Promoting)
@@ -473,6 +472,7 @@ namespace Chess
             CheckForCheck(square);
             Checkmate(square);
             Castling(square);
+            EnPassant();
 
             // Keeps track of the previous move
             ChessBoard.PreviousMove = null;
@@ -594,6 +594,25 @@ namespace Chess
                 rook.HasMoved = true;
             }
         }
+
+        private void EnPassant()
+        {
+            if (IsEnPassantSquare)
+            {
+                if (CurrentPiece.IsBlack)
+                {
+                    ChessBoard.Squares[Row - 1, Column].CurrentPiece = null;
+                    ChessBoard.Squares[Row - 1, Column].Button.Image = null;
+                } 
+                else if (!CurrentPiece.IsBlack)
+                {
+                    ChessBoard.Squares[Row + 1, Column].CurrentPiece = null;
+                    ChessBoard.Squares[Row + 1, Column].Button.Image = null;
+                }
+
+                IsEnPassantSquare = false;
+            }
+        }
     }
 
     #region Pieces
@@ -645,18 +664,6 @@ namespace Chess
                 originalSquare.CurrentPiece = this;
                 move.CurrentPiece = originalPieceOnTarget;
             }
-
-            //if (this is King currentKing && validMoves.Count == 0)
-            //{
-            //    currentKing.InCheck = true;
-            //    MessageBox.Show("King in check");
-            //}
-            //else if (this is King currentKingNotInCheck)
-            //{
-            //    currentKingNotInCheck.InCheck = false;
-            //    MessageBox.Show("King not in check");
-            //}
-
             return validMoves;
         }
 
@@ -1126,7 +1133,6 @@ namespace Chess
                     var diagonalSquare = board[r, column + 1];
                     if (diagonalSquare.CurrentPiece != null && diagonalSquare.CurrentPiece.IsBlack != IsBlack)
                     {
-                        diagonalSquare.IsPawnDoubleSquare = true;
                         moves.Add(diagonalSquare);
                     }
                 }
@@ -1136,7 +1142,6 @@ namespace Chess
                     var diagonalSquare = board[r, column - 1];
                     if (diagonalSquare.CurrentPiece != null && diagonalSquare.CurrentPiece.IsBlack != IsBlack)
                     {
-                        diagonalSquare.IsPawnDoubleSquare = true;
                         moves.Add(diagonalSquare);
                     }
                 }
@@ -1178,10 +1183,18 @@ namespace Chess
                 if (IsBlack)
                 {
                     moveDirection = 1;
+                    if (pawn.CurrentBoardSquare.Row == 3)
+                    {
+                        return null;
+                    }
                 }
                 else
                 {
                     moveDirection = -1;
+                    if (pawn.CurrentBoardSquare.Row == 4)
+                    {
+                        return null;
+                    }
                 }
 
                 if (pawn.CurrentBoardSquare.Column > CurrentBoardSquare.Column)
@@ -1193,7 +1206,9 @@ namespace Chess
                     passDirection = -1;
                 }
 
-                    return board[CurrentBoardSquare.Row + moveDirection, CurrentBoardSquare.Column + passDirection];
+                var enPassantSquare = board[CurrentBoardSquare.Row + moveDirection, CurrentBoardSquare.Column + passDirection];
+                enPassantSquare.IsEnPassantSquare = true;
+                return enPassantSquare;
             }
             else
             {
