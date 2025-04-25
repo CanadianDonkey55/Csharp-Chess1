@@ -75,7 +75,7 @@
             newGameButton.TabIndex = 2;
             newGameButton.Text = "New Game";
             newGameButton.UseVisualStyleBackColor = false;
-            newGameButton.Click += newGameButton_Click;
+            newGameButton.Click += NewGameButton_Click;
             // 
             // Chess
             // 
