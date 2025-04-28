@@ -20,30 +20,33 @@ namespace Chess
             var height = this.ClientSize.Height;
 
             // The new board width and height are a percentage of the total window width and height
-            var newBoardWidth = (int)(width * 0.7);
-            var newBoardHeight = (int)(height * 0.7);
+            var newBoardWidth = width * 0.7;
+            var newBoardHeight = height * 0.7;
 
             // Ensures that the board stays a square
             // The width or height is only the smallest of the two dimensions
             if (newBoardWidth < newBoardHeight)
             {
-                chessBoard.Width = newBoardWidth;
-                chessBoard.Height = newBoardWidth;
+                chessBoard.Width = ((int)newBoardWidth);
+                chessBoard.Height = ((int)newBoardWidth);
             }
             else
             {
-                chessBoard.Width = newBoardHeight;
-                chessBoard.Height = newBoardHeight;
+                chessBoard.Width = ((int)newBoardHeight);
+                chessBoard.Height = ((int)newBoardHeight);
             }
 
             // Sets the board centerpoint
             var chessBoardCenterPoint = new Point((width - chessBoard.Width) / 2, (height - chessBoard.Height) / 2);
             chessBoard.Location = chessBoardCenterPoint;
 
-            //foreach (var square in ChessBoard.Squares)
-            //{
-            //    square.CurrentPiece.PieceImage = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
-            //}
+            // Resize the image on each square
+            foreach (var square in ChessBoard.Squares)
+            {
+                if (square.CurrentPiece == null) continue;
+                if (square.CurrentPiece.PieceImage == null) continue;
+                square.Button.Image = new Bitmap(square.CurrentPiece.PieceImage, square.Button.Width, square.Button.Height);
+            }
         }
 
         private void NewGameButton_Click(object sender, EventArgs e)
@@ -178,6 +181,7 @@ namespace Chess
             }
 
             // Creates the image and assigns the current board square as this piece's square
+            if (CurrentBoardSquare.CurrentPiece == null) return;
             CurrentBoardSquare.Button.Image = CurrentBoardSquare.CurrentPiece.PieceImage;
             CurrentBoardSquare.CurrentPiece.CurrentBoardSquare = CurrentBoardSquare;
             
@@ -187,6 +191,7 @@ namespace Chess
             ChessBoard.IsWhiteTurn = !ChessBoard.IsWhiteTurn;
 
             // Removes the panel
+            if (panel.Parent == null) return;
             panel.Parent.Controls.Remove(panel);
         }
     }
@@ -209,18 +214,18 @@ namespace Chess
             ChessBoardTable = chessBoardPanel;
 
             // Generates the board wuth all their squares
-            GenerateBoard();
+            Squares = GenerateBoard();
 
             // Places the pieces on their starting squares
             GenerateStartingPieces();
         }
 
-        private void GenerateBoard()
+        private BoardSquare[,] GenerateBoard()
         {
             var rows = ChessBoardTable.RowCount;
             var columns = ChessBoardTable.ColumnCount;
 
-            Squares = new BoardSquare[rows, columns];
+            var squares = new BoardSquare[rows, columns];
 
             bool isDark = false;
 
@@ -228,8 +233,8 @@ namespace Chess
             {
                 for (int column = 0; column < columns; column++)
                 {
-                    var square = new BoardSquare(row, column, isDark);
-                    Squares[row, column] = square;
+                    var square = new BoardSquare(row, column, isDark, this);
+                    squares[row, column] = square;
                     square.ChessBoard = this;
 
                     ChessBoardTable.Controls.Add(square.Button, column, row);
@@ -237,6 +242,8 @@ namespace Chess
                 }
                 isDark = !isDark;
             }
+
+            return squares;
         }
 
         public void GenerateStartingPieces()
@@ -316,8 +323,10 @@ namespace Chess
         public bool IsCastleableSquare { get; set; } = false;
         public bool IsEnPassantSquare { get; set; } = false;
 
-        public BoardSquare(int row, int column, bool colour)
+        public BoardSquare(int row, int column, bool colour, ChessBoard chessBoard)
         {
+            ChessBoard = chessBoard;
+
             // The row and columns are equal to the row and column set in the ChessBoard class
             Row = row;
             Column = column;
@@ -343,7 +352,7 @@ namespace Chess
             return square;
         }
 
-        private void ChangeColour(Button square, Color colour)
+        private static void ChangeColour(Button square, Color colour)
         {
             // Each square colour is equal to the colour set in the constructor
 
@@ -429,11 +438,11 @@ namespace Chess
                             move.Button.BackColor = Color.Green;
                             if (move.IsDark)
                             {
-                                move.ChangeColour(move.Button, Color.DarkGreen);
+                                ChangeColour(move.Button, Color.DarkGreen);
                             }
                             else
                             {
-                                move.ChangeColour(move.Button, Color.LightGreen);
+                                ChangeColour(move.Button, Color.LightGreen);
                             }
                         }
 
@@ -546,18 +555,19 @@ namespace Chess
                 return;
             }
 
-            // Check if the team king is in check
+            // Check if the team king is in check  
             var legalMoves = CurrentPiece.InCheckLegalMoves(ChessBoard.Squares);
             foreach (var move in legalMoves)
             {
-                if (move.CurrentPiece == CurrentPiece.GetEnemyKing())
+                var enemyKing = CurrentPiece.GetEnemyKing();
+                if (enemyKing != null && move.CurrentPiece == enemyKing)
                 {
-                    CurrentPiece.GetEnemyKing().InCheck = true;
+                    enemyKing.InCheck = true;
                     break;
                 }
-                else
+                else if (enemyKing != null)
                 {
-                    CurrentPiece.GetEnemyKing().InCheck = false;
+                    enemyKing.InCheck = false;
                 }
             }
         }
@@ -569,8 +579,9 @@ namespace Chess
                 return;
             }
 
-            // Check for checkmate
-            if (CurrentPiece.GetEnemyKing().InCheck && CurrentPiece.GetEnemyKing().InCheckLegalMoves(ChessBoard.Squares).Count <= 0)
+            // Get the enemy king and ensure it's not null before accessing its properties  
+            var enemyKing = CurrentPiece.GetEnemyKing();
+            if (enemyKing != null && enemyKing.InCheck && enemyKing.InCheckLegalMoves(ChessBoard.Squares).Count <= 0)
             {
                 bool checkmate = false;
 
@@ -587,7 +598,7 @@ namespace Chess
                     }
                 }
 
-                // Shows a message displaying who won
+                // Shows a message displaying who won  
                 if (checkmate)
                 {
                     if (ChessBoard.IsWhiteTurn)
@@ -743,7 +754,7 @@ namespace Chess
             return false; // King is not in check  
         }
 
-        public King GetEnemyKing()
+        public King? GetEnemyKing()
         {
             // Checks each square for a king of the opposite colour as this piece
             foreach (var square in CurrentBoardSquare.ChessBoard.Squares)
@@ -1112,9 +1123,10 @@ namespace Chess
             legalMoves.AddRange(Moves(board, row, column));
 
             // If en passant is possible, add it as a legal move
-            if (EnPassantSquare(board) != null)
+            var enPassantSquare = EnPassantSquare(board);
+            if (enPassantSquare != null)
             {
-                legalMoves.Add(EnPassantSquare(board));
+                legalMoves.Add(enPassantSquare);
             }
 
             return legalMoves;
@@ -1211,15 +1223,15 @@ namespace Chess
                 return null;
             }
 
-            // If the previous move was a pawn's first turn, it's not the same colour as this pawn, both pawns are on the same row, they are on columns directly next to each other,
+            // If the previous move was a pawn's first turn, it's not the same color as this pawn, both pawns are on the same row, they are on columns directly next to each other,
             // and it's one of the two rows the en passant can happen on
-            if (CurrentBoardSquare.ChessBoard.PreviousMove.CurrentPiece is Pawn pawn && !pawn.firstTurn && pawn.IsBlack != IsBlack && CurrentBoardSquare.Row == pawn.CurrentBoardSquare.Row && 
-                (pawn.CurrentBoardSquare.Column == CurrentBoardSquare.Column + 1 || pawn.CurrentBoardSquare.Column == CurrentBoardSquare.Column - 1) && 
+            if (CurrentBoardSquare.ChessBoard.PreviousMove.CurrentPiece is Pawn pawn && !pawn.firstTurn && pawn.IsBlack != IsBlack && CurrentBoardSquare.Row == pawn.CurrentBoardSquare.Row &&
+                (pawn.CurrentBoardSquare.Column == CurrentBoardSquare.Column + 1 || pawn.CurrentBoardSquare.Column == CurrentBoardSquare.Column - 1) &&
                 (pawn.CurrentBoardSquare.Row == 3 || pawn.CurrentBoardSquare.Row == 4))
             {
                 // Keeps track of the direction you will pass in (1 = right, -1 = left)
                 int passDirection;
-                // Keeps track of the direction the pawn is mobing in (1 = down, -1 = up)
+                // Keeps track of the direction the pawn is moving in (1 = down, -1 = up)
                 int moveDirection;
                 if (IsBlack)
                 {
@@ -1244,7 +1256,7 @@ namespace Chess
                 if (pawn.CurrentBoardSquare.Column > CurrentBoardSquare.Column)
                 {
                     passDirection = 1;
-                } 
+                }
                 else
                 {
                     passDirection = -1;
